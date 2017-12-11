@@ -1,3 +1,9 @@
 language: java
 jdk:
  - oraclejdk8
+#before_install:
+# - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.5.2.deb && sudo dpkg -i --force-confnew elasticsearch-5.5.2.deb && sudo service elasticsearch restart
+#services:
+# - elasticsearch
+#before_script:
+# - sleep 10

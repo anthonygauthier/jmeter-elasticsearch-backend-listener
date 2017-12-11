@@ -8,7 +8,8 @@ import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
-import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.client.Client;
+//import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -27,14 +28,16 @@ import java.util.*;
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_PROTOCOL     = "es.protocol";
     private static final String ES_HOST         = "es.host";
-    private static final String ES_PORT         = "es.port";
+    private static final String ES_PORT         = "es.transport.port";
     private static final String ES_INDEX        = "es.index";
     private static final String ES_INDEX_TYPE   = "es.indexType";
     private static final String ES_TIMESTAMP    = "es.timestamp";
     private static final String ES_STATUSCODE   = "es.statuscode";
+    private static final String ES_CLUSTER      = "es.cluster";
     //private static final String ES_TRUSTALL_SSL  = "es.trustAllSslCertificates";
 
-    private TransportClient client;
+    private Client client;
+    private Settings settings;
     private String index;
     private String indexType;
     private String host;
@@ -46,11 +49,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         Arguments parameters = new Arguments();
         parameters.addArgument(ES_PROTOCOL, "https");
         parameters.addArgument(ES_HOST, null);
-        parameters.addArgument(ES_PORT, "9200");
+        parameters.addArgument(ES_PORT, "9300");
         parameters.addArgument(ES_INDEX, null);
         parameters.addArgument(ES_INDEX_TYPE, "SampleResult");
         parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
         parameters.addArgument(ES_STATUSCODE, "531");
+        parameters.addArgument(ES_CLUSTER, "elasticsearch");
         //parameters.addArgument(ES_TRUSTALL_SSL, "false");
         return parameters;
     }
@@ -63,8 +67,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             this.host         = context.getParameter(ES_HOST);
             this.port         = Integer.parseInt(context.getParameter(ES_PORT));
             this.buildNumber  = (JMeterUtils.getProperty("BuildNumber") != null && JMeterUtils.getProperty("BuildNumber").trim() != "") ? Integer.parseInt(JMeterUtils.getProperty("BuildNumber")) : 0;
-
-            client = new PreBuiltTransportClient(Settings.EMPTY).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(this.host), this.port));
+            this.settings     = Settings.builder().put("cluster.name", context.getParameter(ES_CLUSTER)).build();
+            this.client       = new PreBuiltTransportClient(this.settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(this.host), this.port));
 
             super.setupTest(context);
         } catch (Exception e) {
@@ -76,7 +80,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
             Map<String, Object> jsonObject = getElasticData(sr, context);
-            client.prepareIndex(this.index, this.indexType).setSource(jsonObject, XContentType.JSON).get();
+            this.client.prepareIndex(this.index, this.indexType).setSource(jsonObject, XContentType.JSON).get();
         }
     }
 
@@ -97,7 +101,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("ConnectTime", sr.getConnectTime());
         jsonObject.put("ContentType", sr.getContentType());
         jsonObject.put("DataType", sr.getDataType());
-        jsonObject.put("EndTime", Long.toString(sr.getEndTime()));
         jsonObject.put("ErrorCount", sr.getErrorCount());
         jsonObject.put("GrpThreads", sr.getGroupThreads());
         jsonObject.put("IdleTime", sr.getIdleTime());
@@ -106,6 +109,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("SampleCount", sr.getSampleCount());
         jsonObject.put("SampleLabel", sr.getSampleLabel());
         jsonObject.put("StartTime", sdf.format(new Date(sr.getStartTime())));
+        jsonObject.put("EndTime", sdf.format(new Date(sr.getEndTime())));
         jsonObject.put("ThreadName", sr.getThreadName());
         jsonObject.put("URL", sr.getURL());
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
@@ -129,11 +133,16 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             }
         }
 
-        //for each custom property -- the elasticsearch index will automatically add new fields (unless specified otherwise)
-        Properties props = JMeterUtils.getJMeterProperties();
+        //For each custom property (starting with "esfield_")
+        // Delirius325, 2017/12/11: This functionnality is not working yet. Working on a fix to be out ASAP.
+        /*Properties props = JMeterUtils.getJMeterProperties();
         for(String key : props.stringPropertyNames()) {
-            jsonObject.put(key, props.getProperty(key));
-        }
+            String propValue = props.getProperty(key);
+            if(propValue.startsWith("es_field_")) {
+                key = key.replace("es_field_","");
+                jsonObject.put(key, propValue);
+            }
+        }*/
 
         return jsonObject;
     }

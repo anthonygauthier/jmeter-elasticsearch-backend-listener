@@ -9,7 +9,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 public class TestElasticSearchBackend {
     private DummyElasticSearchBackend instance = null;
