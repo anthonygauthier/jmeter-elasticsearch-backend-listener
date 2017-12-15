@@ -8,6 +8,7 @@ import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.Client;
 //import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
@@ -78,10 +79,15 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
+        BulkRequestBuilder bulkRequest = client.prepareBulk();
+
         for(SampleResult sr : results) {
             Map<String, Object> jsonObject = getElasticData(sr, context);
-            this.client.prepareIndex(this.index, this.indexType).setSource(jsonObject, XContentType.JSON).get();
+            bulkRequest.add(this.client.prepareIndex(this.index, this.indexType).setSource(jsonObject, XContentType.JSON));
         }
+
+        if(bulkRequest.numberOfActions() >= 50)
+            bulkRequest.get();
     }
 
     @Override
