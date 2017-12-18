@@ -10,7 +10,6 @@ import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.Client;
-//import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -33,9 +32,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_INDEX        = "es.index";
     private static final String ES_INDEX_TYPE   = "es.indexType";
     private static final String ES_TIMESTAMP    = "es.timestamp";
-    private static final String ES_STATUSCODE   = "es.statuscode";
+    private static final String ES_STATUS_CODE  = "es.status.code";
     private static final String ES_CLUSTER      = "es.cluster";
-    //private static final String ES_TRUSTALL_SSL  = "es.trustAllSslCertificates";
+    private static final String ES_BULK_SIZE    = "es.bulk.size";
 
     private Client client;
     private Settings settings;
@@ -44,6 +43,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private String host;
     private Integer port;
     private Integer buildNumber;
+    private Integer bulkSize;
+    private BulkRequestBuilder bulkRequest;
 
     @Override
     public Arguments getDefaultParameters() {
@@ -54,9 +55,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_INDEX, null);
         parameters.addArgument(ES_INDEX_TYPE, "SampleResult");
         parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        parameters.addArgument(ES_STATUSCODE, "531");
+        parameters.addArgument(ES_STATUS_CODE, "531");
         parameters.addArgument(ES_CLUSTER, "elasticsearch");
-        //parameters.addArgument(ES_TRUSTALL_SSL, "false");
+        parameters.addArgument(ES_BULK_SIZE, "100");
         return parameters;
     }
 
@@ -66,11 +67,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             this.index        = context.getParameter(ES_INDEX);
             this.indexType    = context.getParameter(ES_INDEX_TYPE);
             this.host         = context.getParameter(ES_HOST);
+            this.bulkSize     = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.port         = Integer.parseInt(context.getParameter(ES_PORT));
             this.buildNumber  = (JMeterUtils.getProperty("BuildNumber") != null && JMeterUtils.getProperty("BuildNumber").trim() != "") ? Integer.parseInt(JMeterUtils.getProperty("BuildNumber")) : 0;
             this.settings     = Settings.builder().put("cluster.name", context.getParameter(ES_CLUSTER)).build();
             this.client       = new PreBuiltTransportClient(this.settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(this.host), this.port));
-
+            this.bulkRequest  = this.client.prepareBulk();
             super.setupTest(context);
         } catch (Exception e) {
             e.printStackTrace();
@@ -79,25 +81,27 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
-        BulkRequestBuilder bulkRequest = client.prepareBulk();
-
         for(SampleResult sr : results) {
-            Map<String, Object> jsonObject = getElasticData(sr, context);
-            bulkRequest.add(this.client.prepareIndex(this.index, this.indexType).setSource(jsonObject, XContentType.JSON));
+            this.bulkRequest.add(this.client.prepareIndex(this.index, this.indexType).setSource(this.getElasticData(sr, context), XContentType.JSON));
         }
 
-        if(bulkRequest.numberOfActions() >= 50)
-            bulkRequest.get();
+        if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
+            this.bulkRequest.get();
+            this.bulkRequest = this.client.prepareBulk();
+        }
     }
 
     @Override
     public void teardownTest(BackendListenerContext context) throws Exception {
+        if(this.bulkRequest.numberOfActions() > 0)
+            this.bulkRequest.get();
+
         this.client.close();
         super.teardownTest(context);
     }
 
-    public Map<String, Object> getElasticData(SampleResult sr, BackendListenerContext context) {
-        Map<String, Object> jsonObject = new HashMap<String, Object>();
+    public HashMap<String, Object> getElasticData(SampleResult sr, BackendListenerContext context) {
+        HashMap<String, Object> jsonObject = new HashMap<String, Object>();
         SimpleDateFormat sdf = new SimpleDateFormat(context.getParameter(ES_TIMESTAMP));
 
         //add all the default SampleResult parameters
@@ -121,15 +125,15 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
         jsonObject.put("BuildNumber", this.buildNumber);
         jsonObject.put("ElapsedTime", getElapsedDate());
-        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && StringUtils.isNumeric(sr.getResponseCode())) ? sr.getResponseCode() : context.getParameter(ES_STATUSCODE));
+        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && StringUtils.isNumeric(sr.getResponseCode())) ? sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
 
         //all assertions
         AssertionResult[] assertionResults = sr.getAssertionResults();
         if(assertionResults != null) {
-            Map<String, Object> [] assertionArray = new HashMap[assertionResults.length];
+            HashMap<String, Object> [] assertionArray = new HashMap[assertionResults.length];
             Integer i = 0;
             for(AssertionResult assertionResult : assertionResults) {
-                Map<String, Object> assertionMap = new HashMap<String, Object>();
+                HashMap<String, Object> assertionMap = new HashMap<String, Object>();
                 boolean failure = assertionResult.isFailure() || assertionResult.isError();
                 assertionMap.put("failure", failure);
                 assertionMap.put("failureMessage", assertionResult.getFailureMessage());
@@ -138,17 +142,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 i++;
             }
         }
-
-        //For each custom property (starting with "esfield_")
-        // Delirius325, 2017/12/11: This functionnality is not working yet. Working on a fix to be out ASAP.
-        /*Properties props = JMeterUtils.getJMeterProperties();
-        for(String key : props.stringPropertyNames()) {
-            String propValue = props.getProperty(key);
-            if(propValue.startsWith("es_field_")) {
-                key = key.replace("es_field_","");
-                jsonObject.put(key, propValue);
-            }
-        }*/
 
         return jsonObject;
     }
