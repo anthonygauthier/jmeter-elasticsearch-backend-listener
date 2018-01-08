@@ -30,7 +30,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_HOST         = "es.host";
     private static final String ES_PORT         = "es.transport.port";
     private static final String ES_INDEX        = "es.index";
-    private static final String ES_INDEX_TYPE   = "es.indexType";
+    private static final String ES_INDEX_TYPE   = "es.index.type";
     private static final String ES_TIMESTAMP    = "es.timestamp";
     private static final String ES_STATUS_CODE  = "es.status.code";
     private static final String ES_CLUSTER      = "es.cluster";
