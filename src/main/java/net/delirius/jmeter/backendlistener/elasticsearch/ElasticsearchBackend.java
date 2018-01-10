@@ -41,9 +41,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private String index;
     private String indexType;
     private String host;
-    private Integer port;
-    private Integer buildNumber;
-    private Integer bulkSize;
+    private int port;
+    private int buildNumber;
+    private int bulkSize;
     private BulkRequestBuilder bulkRequest;
 
     @Override
@@ -86,8 +86,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         }
 
         if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
-            this.bulkRequest.get();
-            this.bulkRequest = this.client.prepareBulk();
+            try {
+                this.bulkRequest.get();
+                this.bulkRequest = this.client.prepareBulk();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

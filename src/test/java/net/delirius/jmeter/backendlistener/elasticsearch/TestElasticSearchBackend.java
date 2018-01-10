@@ -1,12 +1,17 @@
 package net.delirius.jmeter.backendlistener.elasticsearch;
 
+import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContext;
 import org.apache.jmeter.threads.JMeterContextService;
+import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 
