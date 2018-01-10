@@ -26,11 +26,9 @@ import java.util.*;
  * @source_2: https://github.com/zumo64/ELK_POC
  */
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
-    private static final String ES_PROTOCOL     = "es.protocol";
     private static final String ES_HOST         = "es.host";
     private static final String ES_PORT         = "es.transport.port";
     private static final String ES_INDEX        = "es.index";
-    private static final String ES_INDEX_TYPE   = "es.indexType";
     private static final String ES_TIMESTAMP    = "es.timestamp";
     private static final String ES_STATUS_CODE  = "es.status.code";
     private static final String ES_CLUSTER      = "es.cluster";
@@ -39,7 +37,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private Client client;
     private Settings settings;
     private String index;
-    private String indexType;
     private String host;
     private int port;
     private int buildNumber;
@@ -49,11 +46,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public Arguments getDefaultParameters() {
         Arguments parameters = new Arguments();
-        parameters.addArgument(ES_PROTOCOL, "https");
         parameters.addArgument(ES_HOST, null);
         parameters.addArgument(ES_PORT, "9300");
         parameters.addArgument(ES_INDEX, null);
-        parameters.addArgument(ES_INDEX_TYPE, "SampleResult");
         parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
         parameters.addArgument(ES_STATUS_CODE, "531");
         parameters.addArgument(ES_CLUSTER, "elasticsearch");
@@ -65,7 +60,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
             this.index        = context.getParameter(ES_INDEX);
-            this.indexType    = context.getParameter(ES_INDEX_TYPE);
             this.host         = context.getParameter(ES_HOST);
             this.bulkSize     = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.port         = Integer.parseInt(context.getParameter(ES_PORT));
@@ -82,7 +76,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
-            this.bulkRequest.add(this.client.prepareIndex(this.index, this.indexType).setSource(this.getElasticData(sr, context), XContentType.JSON));
+            this.bulkRequest.add(this.client.prepareIndex(this.index, "SampleResult").setSource(this.getElasticData(sr, context), XContentType.JSON));
         }
 
         if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
