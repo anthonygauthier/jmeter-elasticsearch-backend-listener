@@ -17,7 +17,7 @@
 		<junit.vintage.version>${junit.version}.0</junit.vintage.version>
 		<junit.jupiter.version>5.0.0</junit.jupiter.version>
 		<junit.platform.version>1.0.0</junit.platform.version>
-		<org.apache.jmeter.version>3.0</org.apache.jmeter.version>
+		<org.apache.jmeter.version>3.1</org.apache.jmeter.version>
 		<org.apache.commons>3.4</org.apache.commons>
 		<org.elasticsearch.client>5.5.2</org.elasticsearch.client>
 	</properties>
