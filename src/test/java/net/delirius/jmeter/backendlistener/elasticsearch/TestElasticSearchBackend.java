@@ -29,7 +29,14 @@ public class TestElasticSearchBackend {
     @Test
     public void testGetElapsedTime() throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date testDate = this.instance.getElapsedDate();
+        Date testDate = this.instance.getElapsedDate(false);
+        assertNotNull("testDate = " + sdf.format(testDate), sdf.format(testDate));
+    }
+
+    @Test
+    public void testGetElapsedTimeJenkins() throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date testDate = this.instance.getElapsedDate(true);
         assertNotNull("testDate = " + sdf.format(testDate), sdf.format(testDate));
     }
 }
