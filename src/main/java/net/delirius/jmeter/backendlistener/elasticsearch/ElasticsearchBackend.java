@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
@@ -147,12 +148,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         // If built from Jenkins, add the hard-coded version to be able to compare response time
         // of two builds over the elapsed time
         if(this.buildNumber != 0) {
-            Date elapsedTimeComparison = getElapsedDate(true);
+            Date elapsedTimeComparison = getElapsedTime(true);
             if(elapsedTimeComparison != null)
                 jsonObject.put("ElapsedTimeComparison", elapsedTimeComparison);
         }
 
-        Date elapsedTime = getElapsedDate(false);
+        Date elapsedTime = getElapsedTime(false);
         if(elapsedTime != null)
             jsonObject.put("ElapsedTime", elapsedTime);
         jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && 
@@ -179,7 +180,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         return jsonObject;
     }
 
-    public Date getElapsedDate(boolean forBuildComparison) {
+    public Date getElapsedTime(boolean forBuildComparison) {
         String sElapsed;
         //Calculate the elapsed time (Starting from midnight on a random day - enables us to compare of two loads over their duration)
         long start = JMeterContextService.getTestStartTime();
@@ -200,7 +201,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                     cal.get(Calendar.SECOND));
         } else {
             sElapsed = String.format("%s %02d:%02d:%02d",
-                    DateTimeFormatter.ofPattern("yyyy-mm-dd").format(LocalDate.now()),
+                    DateTimeFormatter.ofPattern("yyyy-mm-dd").format(LocalDateTime.now()),
                     cal.get(Calendar.HOUR_OF_DAY),
                     cal.get(Calendar.MINUTE),
                     cal.get(Calendar.SECOND));
