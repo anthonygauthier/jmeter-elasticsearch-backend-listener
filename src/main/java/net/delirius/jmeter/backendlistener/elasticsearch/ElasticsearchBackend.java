@@ -1,5 +1,15 @@
 package net.delirius.jmeter.backendlistener.elasticsearch;
 
+import java.net.InetAddress;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.config.Arguments;
@@ -10,13 +20,13 @@ import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import java.net.InetAddress;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -26,6 +36,7 @@ import java.util.*;
  * @source_2: https://github.com/zumo64/ELK_POC
  */
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
+    private static final String BUILD_NUMBER = "BuildNumber";
     private static final String ES_HOST         = "es.host";
     private static final String ES_PORT         = "es.transport.port";
     private static final String ES_INDEX        = "es.index";
@@ -33,15 +44,16 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_STATUS_CODE  = "es.status.code";
     private static final String ES_CLUSTER      = "es.cluster";
     private static final String ES_BULK_SIZE    = "es.bulk.size";
+    private static final String ES_TIMEOUT_MS   = "es.timout.ms";
+    private static final long DEFAULT_TIMEOUT_MS = 200L;
+    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
     private Client client;
-    private Settings settings;
     private String index;
-    private String host;
-    private int port;
     private int buildNumber;
     private int bulkSize;
     private BulkRequestBuilder bulkRequest;
+    private long timeoutMs;
 
     @Override
     public Arguments getDefaultParameters() {
@@ -53,6 +65,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_STATUS_CODE, "531");
         parameters.addArgument(ES_CLUSTER, "elasticsearch");
         parameters.addArgument(ES_BULK_SIZE, "100");
+        parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         return parameters;
     }
 
@@ -60,16 +73,20 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
             this.index        = context.getParameter(ES_INDEX);
-            this.host         = context.getParameter(ES_HOST);
             this.bulkSize     = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
-            this.port         = Integer.parseInt(context.getParameter(ES_PORT));
-            this.buildNumber  = (JMeterUtils.getProperty("BuildNumber") != null && JMeterUtils.getProperty("BuildNumber").trim() != "") ? Integer.parseInt(JMeterUtils.getProperty("BuildNumber")) : 0;
-            this.settings     = Settings.builder().put("cluster.name", context.getParameter(ES_CLUSTER)).build();
-            this.client       = new PreBuiltTransportClient(this.settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(this.host), this.port));
+            this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+            this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null 
+                    && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "") 
+                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
+            Settings settings = Settings.builder().put("cluster.name", context.getParameter(ES_CLUSTER)).build();
+            String host         = context.getParameter(ES_HOST);
+            int port         = Integer.parseInt(context.getParameter(ES_PORT));
+            this.client       = new PreBuiltTransportClient(settings).addTransportAddress(
+                    new InetSocketTransportAddress(InetAddress.getByName(host), port));
             this.bulkRequest  = this.client.prepareBulk();
             super.setupTest(context);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Unable to setup connectivity to ES", e);
         }
     }
 
@@ -81,31 +98,33 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
         if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
             try {
-                this.bulkRequest.get();
-                this.bulkRequest = this.client.prepareBulk();
+                this.bulkRequest.get(TimeValue.timeValueMillis(timeoutMs));
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Error sending data to ES, data will be lost", e);
+            } finally {
+                this.bulkRequest = this.client.prepareBulk();
             }
         }
     }
 
     @Override
     public void teardownTest(BackendListenerContext context) throws Exception {
-        if(this.bulkRequest.numberOfActions() > 0)
+        if(this.bulkRequest.numberOfActions() > 0) {
             this.bulkRequest.get();
-
-        this.client.close();
+        }
+        IOUtils.closeQuietly(client);
         super.teardownTest(context);
     }
 
-    public HashMap<String, Object> getElasticData(SampleResult sr, BackendListenerContext context) {
-        HashMap<String, Object> jsonObject = new HashMap<String, Object>();
+    public Map<String, Object> getElasticData(SampleResult sr, BackendListenerContext context) {
+        HashMap<String, Object> jsonObject = new HashMap<>();
         SimpleDateFormat sdf = new SimpleDateFormat(context.getParameter(ES_TIMESTAMP));
 
         //add all the default SampleResult parameters
         jsonObject.put("AllThreads", sr.getAllThreads());
-        jsonObject.put("BodySize", sr.getBodySize());
-        jsonObject.put("Bytes", sr.getBytes());
+        jsonObject.put("BodySize", sr.getBodySizeAsLong());
+        jsonObject.put("Bytes", sr.getBytesAsLong());
+        jsonObject.put("SentBytes", sr.getSentBytes());
         jsonObject.put("ConnectTime", sr.getConnectTime());
         jsonObject.put("ContentType", sr.getContentType());
         jsonObject.put("DataType", sr.getDataType());
@@ -113,7 +132,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("GrpThreads", sr.getGroupThreads());
         jsonObject.put("IdleTime", sr.getIdleTime());
         jsonObject.put("Latency", sr.getLatency());
-        jsonObject.put("ResponseTime", (sr.getEndTime() - sr.getStartTime()));
+        jsonObject.put("ResponseTime", sr.getTime());
         jsonObject.put("SampleCount", sr.getSampleCount());
         jsonObject.put("SampleLabel", sr.getSampleLabel());
         jsonObject.put("StartTime", sdf.format(new Date(sr.getStartTime())));
@@ -121,9 +140,14 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("ThreadName", sr.getThreadName());
         jsonObject.put("URL", sr.getURL());
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
-        jsonObject.put("BuildNumber", this.buildNumber);
-        jsonObject.put("ElapsedTime", getElapsedDate());
-        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && StringUtils.isNumeric(sr.getResponseCode())) ? sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
+        jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
+        Date elapsedDate = getElapsedDate();
+        if(elapsedDate != null) {
+            jsonObject.put("ElapsedTime", elapsedDate);
+        }
+        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && 
+                StringUtils.isNumeric(sr.getResponseCode())) ? 
+                        sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
 
         //all assertions
         AssertionResult[] assertionResults = sr.getAssertionResults();
@@ -131,7 +155,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             HashMap<String, Object> [] assertionArray = new HashMap[assertionResults.length];
             Integer i = 0;
             for(AssertionResult assertionResult : assertionResults) {
-                HashMap<String, Object> assertionMap = new HashMap<String, Object>();
+                HashMap<String, Object> assertionMap = new HashMap<>();
                 boolean failure = assertionResult.isFailure() || assertionResult.isError();
                 assertionMap.put("failure", failure);
                 assertionMap.put("failureMessage", assertionResult.getFailureMessage());
@@ -146,24 +170,27 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
     public Date getElapsedDate() {
         //Calculate the elapsed time (Starting from midnight on a random day - enables us to compare of two loads over their duration)
-        try {
-            SimpleDateFormat formatter = new SimpleDateFormat("YYYY-mm-dd HH:mm:ss");
-            long start = JMeterContextService.getTestStartTime();
-            long end = System.currentTimeMillis();
-            long elapsed = (end - start);
-            long minutes = (elapsed / 1000) / 60;
-            long seconds = (elapsed / 1000) % 60;
+        long start = JMeterContextService.getTestStartTime();
+        long end = System.currentTimeMillis();
+        long elapsed = (end - start);
+        long minutes = (elapsed / 1000) / 60;
+        long seconds = (elapsed / 1000) % 60;
 
-            Calendar cal = Calendar.getInstance();
-            cal.set(Calendar.HOUR_OF_DAY, 0); //If there is more than an hour of data, the number of minutes/seconds will increment this
-            cal.set(Calendar.MINUTE, (int) minutes);
-            cal.set(Calendar.SECOND, (int) seconds);
-            String sElapsed = String.format("2017-01-01 %02d:%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), cal.get(Calendar.SECOND));
-            Date elapsedDate = formatter.parse(sElapsed);
-            return elapsedDate;
-        } catch (Exception e) {
-            e.printStackTrace();
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0); //If there is more than an hour of data, the number of minutes/seconds will increment this
+        cal.set(Calendar.MINUTE, (int) minutes);
+        cal.set(Calendar.SECOND, (int) seconds);
+        String sElapsed = String.format("2017-01-01 %02d:%02d:%02d", 
+                cal.get(Calendar.HOUR_OF_DAY), 
+                cal.get(Calendar.MINUTE),
+                cal.get(Calendar.SECOND));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
+        try {
+            return formatter.parse(sElapsed);
+        } catch (ParseException e) {
+            logger.error("Unexpected error occured computing elapsed date", e);
             return null;
         }
+
     }
 }
