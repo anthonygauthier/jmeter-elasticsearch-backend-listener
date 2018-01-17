@@ -3,6 +3,9 @@ package net.delirius.jmeter.backendlistener.elasticsearch;
 import java.net.InetAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -151,10 +154,18 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("URL", sr.getURL());
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
-        Date elapsedDate = getElapsedDate();
-        if(elapsedDate != null) {
-            jsonObject.put("ElapsedTime", elapsedDate);
+
+        // If built from Jenkins, add the hard-coded version to be able to compare response time
+        // of two builds over the elapsed time
+        if(this.buildNumber != 0) {
+            Date elapsedTimeComparison = getElapsedTime(true);
+            if(elapsedTimeComparison != null)
+                jsonObject.put("ElapsedTimeComparison", elapsedTimeComparison);
         }
+
+        Date elapsedTime = getElapsedTime(false);
+        if(elapsedTime != null)
+            jsonObject.put("ElapsedTime", elapsedTime);
         jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && 
                 StringUtils.isNumeric(sr.getResponseCode())) ? 
                         sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
@@ -173,12 +184,14 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 assertionArray[i] = assertionMap;
                 i++;
             }
+            jsonObject.put("AssertionResults", assertionArray);
         }
 
         return jsonObject;
     }
 
-    public Date getElapsedDate() {
+    public Date getElapsedTime(boolean forBuildComparison) {
+        String sElapsed;
         //Calculate the elapsed time (Starting from midnight on a random day - enables us to compare of two loads over their duration)
         long start = JMeterContextService.getTestStartTime();
         long end = System.currentTimeMillis();
@@ -190,10 +203,20 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         cal.set(Calendar.HOUR_OF_DAY, 0); //If there is more than an hour of data, the number of minutes/seconds will increment this
         cal.set(Calendar.MINUTE, (int) minutes);
         cal.set(Calendar.SECOND, (int) seconds);
-        String sElapsed = String.format("2017-01-01 %02d:%02d:%02d", 
-                cal.get(Calendar.HOUR_OF_DAY), 
-                cal.get(Calendar.MINUTE),
-                cal.get(Calendar.SECOND));
+
+        if(forBuildComparison) {
+            sElapsed = String.format("2017-01-01 %02d:%02d:%02d",
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    cal.get(Calendar.SECOND));
+        } else {
+            sElapsed = String.format("%s %02d:%02d:%02d",
+                    DateTimeFormatter.ofPattern("yyyy-mm-dd").format(LocalDateTime.now()),
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    cal.get(Calendar.SECOND));
+        }
+
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss");
         try {
             return formatter.parse(sElapsed);
