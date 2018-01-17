@@ -19,7 +19,7 @@ import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
@@ -48,7 +48,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
-    private Client client;
+    private PreBuiltTransportClient client;
     private String index;
     private int buildNumber;
     private int bulkSize;
@@ -81,7 +81,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             Settings settings = Settings.builder().put("cluster.name", context.getParameter(ES_CLUSTER)).build();
             String host         = context.getParameter(ES_HOST);
             int port         = Integer.parseInt(context.getParameter(ES_PORT));
-            this.client       = new PreBuiltTransportClient(settings).addTransportAddress(
+            this.client       = new PreBuiltTransportClient(settings);
+            this.client.addTransportAddress(
                     new InetSocketTransportAddress(InetAddress.getByName(host), port));
             this.bulkRequest  = this.client.prepareBulk();
             super.setupTest(context);
@@ -98,7 +99,16 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
         if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
             try {
-                this.bulkRequest.get(TimeValue.timeValueMillis(timeoutMs));
+                BulkResponse bulkResponse = this.bulkRequest.get(TimeValue.timeValueMillis(timeoutMs));
+                if (bulkResponse.hasFailures()) {
+                    if(logger.isErrorEnabled()) {
+                        logger.error("Failed to write a result on {}: {}",
+                                index, bulkResponse.buildFailureMessage());
+                    }
+                } else {
+                    logger.debug("Wrote {} results in {}.",
+                            index);
+                }
             } catch (Exception e) {
                 logger.error("Error sending data to ES, data will be lost", e);
             } finally {
