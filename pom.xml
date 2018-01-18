@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.delirius</groupId>
 	<artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-	<version>2.1.0</version>
+	<version>2.1.1</version>
 	<packaging>jar</packaging>
 	<name>jmeter.backendlistener.elasticsearch</name>
 	<url>http://maven.apache.org</url>
@@ -148,6 +148,19 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+                            <minimizeJar>true</minimizeJar>
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>org.apache.jmeter:*</exclude>
+                                    <exclude>commons-codec:*</exclude>
+                                    <exclude>commons-logging:*</exclude>
+                                    <exclude>com.fasterxml.jackson.*:*</exclude>
+                                    <exclude>org.apache.httpcomponents:*</exclude>
+                                    <exclude>joda-time:*</exclude>
+                                    <exclude>org.apache.lucene:*</exclude>
+                                    <exclude>org.hdrhistogram:*</exclude>
+                                </excludes>
+                            </artifactSet>
 							<transformers>
 								<!-- add Main-Class to manifest file -->
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
