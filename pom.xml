@@ -139,7 +139,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.3</version>
+				<version>2.4</version>
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
@@ -154,19 +154,27 @@
                                     <exclude>org.apache.jmeter:*</exclude>
                                     <exclude>commons-codec:*</exclude>
                                     <exclude>commons-logging:*</exclude>
-                                    <exclude>com.fasterxml.jackson.*:*</exclude>
                                     <exclude>org.apache.httpcomponents:*</exclude>
-                                    <exclude>joda-time:*</exclude>
-                                    <exclude>org.apache.lucene:*</exclude>
-                                    <exclude>org.hdrhistogram:*</exclude>
                                 </excludes>
                             </artifactSet>
-							<transformers>
-								<!-- add Main-Class to manifest file -->
-								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>net.delirius.jmeter.backendlistener.elasticsearch.ElasticsearchBackend</mainClass>
-								</transformer>
-							</transformers>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.joda</pattern>
+                                    <shadedPattern>net.delirius.dep.org.joda</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.yaml.snakeyaml</pattern>
+                                    <shadedPattern>net.delirius.dep.org.yaml.snakeyaml</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.fasterxml.jackson</pattern>
+                                    <shadedPattern>net.delirius.dep.com.fasterxml.jackson</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.HdrHistogram</pattern>
+                                    <shadedPattern>net.delirius.dep.org.HdrHistogram</shadedPattern>
+                                </relocation>
+                            </relocations>
 						</configuration>
 					</execution>
 				</executions>
