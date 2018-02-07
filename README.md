@@ -5,7 +5,7 @@ to an ElasticSearch engine.
 
 ### Features
 
-* The plugin uses the ElasticSearch low-level REST client meaning that it works with any versions of ElasticSearch.
+* The plugin uses the ElasticSearch low-level REST client meaning that it works with any version of ElasticSearch.
 * The plugin makes use of ElasticSearch's ability to make bulk requests. 
 By doing this, we limit the amount of HTTP calls made to the ES engine, therefore minimally impacting the tests performance. 
 
