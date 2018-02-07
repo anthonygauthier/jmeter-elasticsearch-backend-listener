@@ -1,4 +1,4 @@
-package net.delirius.jmeter.backendlistener.elasticsearch;
+package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import static org.junit.Assert.assertNotNull;
 

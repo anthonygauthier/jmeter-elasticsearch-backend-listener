@@ -1,19 +1,20 @@
-package net.delirius.jmeter.backendlistener.elasticsearch;
+package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
@@ -21,13 +22,8 @@ import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,11 +47,11 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
-    private RestHighLevelClient client;
+    private List<String> bulkRequestList;
+    private RestClient client;
     private String index;
     private int buildNumber;
     private int bulkSize;
-    private BulkRequest bulkRequest;
     private long timeoutMs;
 
     @Override
@@ -75,23 +71,30 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
-            this.index        = context.getParameter(ES_INDEX);
-            this.bulkSize     = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
+            //
+            String host = context.getParameter(ES_HOST);
+            int port = Integer.parseInt(context.getParameter(ES_PORT));
+            this.index = context.getParameter(ES_INDEX);
+            this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-            this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null 
-                    && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "") 
-                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
-            String host         = context.getParameter(ES_HOST);
-            int port         = Integer.parseInt(context.getParameter(ES_PORT));
-            this.client       = new RestHighLevelClient(
-                        RestClient.builder(
-                            new HttpHost(host, port, context.getParameter(ES_SCHEME, "http")))
-                        .setRequestConfigCallback(requestConfigBuilder -> 
-                             requestConfigBuilder
-                                        .setConnectTimeout(5000)
-                                        .setSocketTimeout((int)timeoutMs))
-                        .setMaxRetryTimeoutMillis(60000));
-            this.bulkRequest = new BulkRequest().timeout(TimeValue.timeValueMillis(timeoutMs));
+            this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "")
+                                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
+
+            // Build RestHighLevelClient & BulkRequest
+
+            this.client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), port, context.getParameter(ES_SCHEME)))
+                    .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
+                            .setSocketTimeout((int) timeoutMs))
+                    .setFailureListener(new RestClient.FailureListener() {
+                        @Override
+                        public void onFailure(HttpHost host) {
+                            throw new IllegalStateException();
+                        }
+                    })
+                    .setMaxRetryTimeoutMillis(60000)
+                    .build();
+            this.bulkRequestList = new LinkedList<String>();
+
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to setup connectivity to ES", e);
@@ -101,41 +104,53 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
-            this.bulkRequest.add(
-                    new IndexRequest(this.index, "SampleResult").source(this.getElasticData(sr, context), 
-                            XContentType.JSON));
+            Gson gson = new Gson();
+            String json = gson.toJson(this.getElasticData(sr, context));
+            this.bulkRequestList.add(json);
         }
 
-        if(this.bulkRequest.numberOfActions() >= this.bulkSize) {
+        if(this.bulkRequestList.size() >= this.bulkSize) {
             try {
-                sendRequest(bulkRequest);
+                sendRequest(this.bulkRequestList);
             } catch (Exception e) {
                 logger.error("Error sending data to ES, data will be lost", e);
             } finally {
-                this.bulkRequest = new BulkRequest().timeout(TimeValue.timeValueMillis(timeoutMs));
+                this.bulkRequestList.clear();
             }
         }
     }
 
     @Override
     public void teardownTest(BackendListenerContext context) throws Exception {
-        if(this.bulkRequest.numberOfActions() > 0) {
-            sendRequest(bulkRequest);
+        if(this.bulkRequestList.size() > 0) {
+            sendRequest(this.bulkRequestList);
         }
         IOUtils.closeQuietly(client);
         super.teardownTest(context);
     }
     
-    private void sendRequest(BulkRequest bulkRequest) throws IOException {
-        BulkResponse bulkResponse = this.client.bulk(bulkRequest);
-        if (bulkResponse.hasFailures()) {
-            if(logger.isErrorEnabled()) {
-                logger.error("Failed to write a result on {}: {}",
-                        index, bulkResponse.buildFailureMessage());
+    private void sendRequest(List<String> bulkList) throws IOException {
+        String actionMetaData = String.format("{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\" } }%n", this.index, "SampleResult");
+
+        StringBuilder bulkRequestBody = new StringBuilder();
+        for (String bulkItem : bulkList) {
+            bulkRequestBody.append(actionMetaData);
+            bulkRequestBody.append(bulkItem);
+            bulkRequestBody.append("\n");
+        }
+
+        HttpEntity entity = new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON);
+        try {
+            Response response = client.performRequest("POST", "/your_index/your_type/_bulk", Collections.emptyMap(), entity);
+            if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                if(logger.isErrorEnabled()) {
+                    logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.index);
+                }
             }
-        } else {
-            logger.debug("Wrote {} results in {}.",
-                    index);
+        } catch (Exception e) {
+            if(logger.isErrorEnabled()) {
+                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine.");
+            }
         }
     }
 
@@ -176,9 +191,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         Date elapsedTime = getElapsedTime(false);
         if(elapsedTime != null)
             jsonObject.put("ElapsedTime", elapsedTime);
-        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && 
-                StringUtils.isNumeric(sr.getResponseCode())) ? 
-                        sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
+        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && StringUtils.isNumeric(sr.getResponseCode()))
+                                        ? sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
 
         //all assertions
         AssertionResult[] assertionResults = sr.getAssertionResults();

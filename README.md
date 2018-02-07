@@ -1,11 +1,15 @@
-# jmeter-elasticsearch-backend-listener
-JMeter plugin that lets you send sample results to an ElasticSearch engine to enable live monitoring of load tests.
+# Overview
+### Description
+JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results 
+to an ElasticSearch engine.
 
-## What you need to know
-### Should work with
-ElasticSearch 5.X.X (optimized for 5.5.2) - might even work with 6.X.X although there has been changes in the ElasticSearch API between version 5 and 6.
+### Features
 
-### Contributing
+* The plugin uses the ElasticSearch low-level REST client meaning that it works with any versions of ElasticSearch.
+* The plugin makes use of ElasticSearch's ability to make bulk requests. 
+By doing this, we limit the amount of HTTP calls made to the ES engine, therefore minimally impacting the tests performance. 
+
+## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
 
 ## Sample ElasticSearch Index
