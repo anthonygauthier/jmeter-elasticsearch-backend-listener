@@ -35,19 +35,21 @@ import org.slf4j.LoggerFactory;
  * @source_2: https://github.com/zumo64/ELK_POC
  */
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
-    private static final String BUILD_NUMBER    = "BuildNumber";
-    private static final String ES_SCHEME       = "es.scheme";
-    private static final String ES_HOST         = "es.host";
-    private static final String ES_PORT         = "es.transport.port";
-    private static final String ES_INDEX        = "es.index";
-    private static final String ES_TIMESTAMP    = "es.timestamp";
-    private static final String ES_STATUS_CODE  = "es.status.code";
-    private static final String ES_BULK_SIZE    = "es.bulk.size";
-    private static final String ES_TIMEOUT_MS   = "es.timout.ms";
+    private static final String BUILD_NUMBER     = "BuildNumber";
+    private static final String ES_SCHEME        = "es.scheme";
+    private static final String ES_HOST          = "es.host";
+    private static final String ES_PORT          = "es.transport.port";
+    private static final String ES_INDEX         = "es.index";
+    private static final String ES_TIMESTAMP     = "es.timestamp";
+    private static final String ES_STATUS_CODE   = "es.status.code";
+    private static final String ES_BULK_SIZE     = "es.bulk.size";
+    private static final String ES_TIMEOUT_MS    = "es.timout.ms";
+    private static final String ES_SAMPLE_FILTER = "es.sample.filter";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
     private List<String> bulkRequestList;
+    private List<String> filters;
     private RestClient client;
     private String index;
     private int buildNumber;
@@ -65,23 +67,21 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_STATUS_CODE, "531");
         parameters.addArgument(ES_BULK_SIZE, "100");
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
+        parameters.addArgument(ES_SAMPLE_FILTER, null);
         return parameters;
     }
 
     @Override
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
-            //
             String host = context.getParameter(ES_HOST);
+            this.filters = new LinkedList<String>();
             int port = Integer.parseInt(context.getParameter(ES_PORT));
             this.index = context.getParameter(ES_INDEX);
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
             this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "")
                                     ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
-
-            // Build RestHighLevelClient & BulkRequest
-
             this.client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), port, context.getParameter(ES_SCHEME)))
                     .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
                             .setSocketTimeout((int) timeoutMs))
@@ -94,7 +94,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                     .setMaxRetryTimeoutMillis(60000)
                     .build();
             this.bulkRequestList = new LinkedList<String>();
-
+            String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
+            if(filterArray.length >= 1 && filterArray[0].trim() != "") {
+                for (String filter : filterArray) {
+                    this.filters.add(filter);
+                }
+            }
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to setup connectivity to ES", e);
@@ -104,9 +109,24 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
-            Gson gson = new Gson();
-            String json = gson.toJson(this.getElasticData(sr, context));
-            this.bulkRequestList.add(json);
+            boolean validSample = false;
+
+            if(this.filters == null) {
+                validSample = true;
+            } else {
+                for(String filter : this.filters) {
+                    if(filter.toLowerCase().trim().equals(sr.getSampleLabel().toLowerCase().trim())) {
+                        validSample = true;
+                        break;
+                    }
+                }
+            }
+
+            if(validSample) {
+                Gson gson = new Gson();
+                String json = gson.toJson(this.getElasticData(sr, context));
+                this.bulkRequestList.add(json);
+            }
         }
 
         if(this.bulkRequestList.size() >= this.bulkSize) {
