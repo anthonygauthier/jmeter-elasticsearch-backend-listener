@@ -30,15 +30,12 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author: Delirius325
- * @inspired_by: korteke & zumo64
- * @source_1: https://github.com/korteke/JMeter_ElasticsearchBackendListener
- * @source_2: https://github.com/zumo64/ELK_POC
  */
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String BUILD_NUMBER     = "BuildNumber";
     private static final String ES_SCHEME        = "es.scheme";
     private static final String ES_HOST          = "es.host";
-    private static final String ES_PORT          = "es.transport.port";
+    private static final String ES_PORT          = "es.port";
     private static final String ES_INDEX         = "es.index";
     private static final String ES_TIMESTAMP     = "es.timestamp";
     private static final String ES_STATUS_CODE   = "es.status.code";
@@ -110,12 +107,13 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
             boolean validSample = false;
+            String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
             if(this.filters == null) {
                 validSample = true;
             } else {
                 for(String filter : this.filters) {
-                    if(filter.toLowerCase().trim().equals(sr.getSampleLabel().toLowerCase().trim())) {
+                    if(filter.toLowerCase().trim().equals(sampleLabel) || sampleLabel.contains(filter.toLowerCase().trim())) {
                         validSample = true;
                         break;
                     }
@@ -169,7 +167,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             }
         } catch (Exception e) {
             if(logger.isErrorEnabled()) {
-                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine.");
+                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Request reached timeout.");
             }
         }
     }
