@@ -99,7 +99,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             }
             super.setupTest(context);
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to setup connectivity to ES", e);
+            throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
         }
     }
 
@@ -131,7 +131,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             try {
                 sendRequest(this.bulkRequestList);
             } catch (Exception e) {
-                logger.error("Error sending data to ES, data will be lost", e);
+                logger.error("Error occured while sending bulk request.", e);
             } finally {
                 this.bulkRequestList.clear();
             }
