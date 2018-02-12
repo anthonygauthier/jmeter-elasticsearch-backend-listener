@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.delirius325</groupId>
 	<artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-	<version>2.2.1</version>
+	<version>2.2.2</version>
 	<packaging>jar</packaging>
 	<name>jmeter.backendlistener.elasticsearch</name>
 	<url>https://github.com/delirius325/jmeter-elasticsearch-backend-listener</url>

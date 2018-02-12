@@ -159,7 +159,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
         HttpEntity entity = new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON);
         try {
-            Response response = client.performRequest("POST", "/your_index/your_type/_bulk", Collections.emptyMap(), entity);
+            Response response = client.performRequest("POST", "/"+ this.index +"/SampleResult/_bulk", Collections.emptyMap(), entity);
             if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if(logger.isErrorEnabled()) {
                     logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.index);
