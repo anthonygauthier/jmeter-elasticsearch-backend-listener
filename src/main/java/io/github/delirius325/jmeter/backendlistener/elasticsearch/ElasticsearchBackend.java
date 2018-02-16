@@ -109,7 +109,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             boolean validSample = false;
             String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
-            if(this.filters == null) {
+            if(this.filters.size() == 0) {
                 validSample = true;
             } else {
                 for(String filter : this.filters) {
