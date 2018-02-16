@@ -39,3 +39,4 @@ buildNumber.properties
 # IntelliJ
 **.idea
 *.iml
+*.sh

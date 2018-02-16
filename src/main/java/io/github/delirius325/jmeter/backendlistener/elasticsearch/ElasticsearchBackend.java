@@ -27,10 +27,6 @@ import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
- * @author: Delirius325
- */
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String BUILD_NUMBER     = "BuildNumber";
     private static final String ES_SCHEME        = "es.scheme";
