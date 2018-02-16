@@ -10,6 +10,15 @@ By doing this, we limit the amount of HTTP calls made to the ES engine, therefor
 * Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``. *Leave it empty if you don't want any filter!
 * You can use either Kibana or Grafana to vizualize your results!
 
+### Maven
+```xml
+<dependency>
+  <groupId>io.github.delirius325</groupId>
+  <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
+  <version>2.2.2</version>
+</dependency>
+```
+
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
 
