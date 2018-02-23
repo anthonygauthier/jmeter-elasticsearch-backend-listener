@@ -2,9 +2,6 @@
 ### Description
 JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results to an ElasticSearch engine. It is meant as an alternative live-monitoring tool to the built-in "InfluxDB" backend listener of JMeter. 
 
-![screnshot1](https://image.ibb.co/kDH3YH/Screen_Shot_2018_02_23_at_2_18_03_PM.png "Screenshot of configuration")
-![screnshot1](https://image.ibb.co/bA1oYH/Screen_Shot_2018_02_23_at_2_37_46_PM.png "Example Kibana dashboard")
-
 ### Features
 
 * The plugin uses the ElasticSearch low-level REST client meaning that it works with any version of ElasticSearch.
@@ -24,6 +21,12 @@ By doing this, we limit the amount of HTTP calls made to the ES engine, therefor
 
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
+
+## Screenshots
+### Configuration
+![screnshot1](https://image.ibb.co/kDH3YH/Screen_Shot_2018_02_23_at_2_18_03_PM.png "Screenshot of configuration")
+### Very simple example of Kibana dashboard
+![screnshot1](https://image.ibb.co/bA1oYH/Screen_Shot_2018_02_23_at_2_37_46_PM.png "Example Kibana dashboard")
 
 ## Sample ElasticSearch Index
 
