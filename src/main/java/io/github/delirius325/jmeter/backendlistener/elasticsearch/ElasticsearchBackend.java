@@ -15,7 +15,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
-import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContextService;
@@ -34,10 +33,10 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_PORT          = "es.port";
     private static final String ES_INDEX         = "es.index";
     private static final String ES_TIMESTAMP     = "es.timestamp";
-    private static final String ES_STATUS_CODE   = "es.status.code";
     private static final String ES_BULK_SIZE     = "es.bulk.size";
     private static final String ES_TIMEOUT_MS    = "es.timout.ms";
     private static final String ES_SAMPLE_FILTER = "es.sample.filter";
+    private static final String ES_TEST_MODE     = "es.test.mode";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
@@ -57,10 +56,10 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_PORT, "9200");
         parameters.addArgument(ES_INDEX, null);
         parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        parameters.addArgument(ES_STATUS_CODE, "531");
         parameters.addArgument(ES_BULK_SIZE, "100");
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         parameters.addArgument(ES_SAMPLE_FILTER, null);
+        parameters.addArgument(ES_TEST_MODE, "debug");
         return parameters;
     }
 
@@ -194,7 +193,22 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
 
-        // If built from Jenkins, add the hard-coded version to be able to compare response time
+        // Add the details according to the mode that is set
+        switch(context.getParameter(ES_TEST_MODE).trim()) {
+            case "debug":
+                jsonObject = addDetails(sr, jsonObject);
+                break;
+            case "info":
+                if(!sr.isResponseCodeOK()) {
+                    jsonObject = addDetails(sr, jsonObject);
+                }
+                break;
+            default:
+                logger.warn("The parameter \"es.test.mode\" isn't set properly. Two modes are allowed: debug and info. Debug sends request and response details to ElasticSearch. Info only sends the details if the response is an error, it should be used in production.");
+                break;
+        }
+
+        // If built from Jenkins, add the hard-c                                                                                                                                                                                                                                                                                                                                                                                                                                                               oded version to be able to compare response time
         // of two builds over the elapsed time
         if(this.buildNumber != 0) {
             Date elapsedTimeComparison = getElapsedTime(true);
@@ -205,26 +219,16 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         Date elapsedTime = getElapsedTime(false);
         if(elapsedTime != null)
             jsonObject.put("ElapsedTime", elapsedTime);
-        jsonObject.put("ResponseCode", (sr.isResponseCodeOK() && StringUtils.isNumeric(sr.getResponseCode()))
-                                        ? sr.getResponseCode() : context.getParameter(ES_STATUS_CODE));
+        jsonObject.put("ResponseCode", (sr.getResponseCode()));
 
-        //all assertions
-        AssertionResult[] assertionResults = sr.getAssertionResults();
-        if(assertionResults != null) {
-            Map<String, Object>[] assertionArray = new HashMap[assertionResults.length];
-            Integer i = 0;
-            for(AssertionResult assertionResult : assertionResults) {
-                HashMap<String, Object> assertionMap = new HashMap<>();
-                boolean failure = assertionResult.isFailure() || assertionResult.isError();
-                assertionMap.put("failure", failure);
-                assertionMap.put("failureMessage", assertionResult.getFailureMessage());
-                assertionMap.put("name", assertionResult.getName());
-                assertionArray[i] = assertionMap;
-                i++;
-            }
-            jsonObject.put("AssertionResults", assertionArray);
-        }
+        return jsonObject;
+    }
 
+    public HashMap<String, Object> addDetails(SampleResult sr, HashMap<String, Object> jsonObject) {
+        jsonObject.put("RequestHeaders", sr.getRequestHeaders());
+        jsonObject.put("ResponseHeaders", sr.getResponseHeaders());
+        jsonObject.put("ResponseBody", sr.getResponseDataAsString());
+        jsonObject.put("ResponseMessage", sr.getResponseMessage());
         return jsonObject;
     }
 
