@@ -6,7 +6,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 
 * The plugin uses the ElasticSearch low-level REST client meaning that it works with any version of ElasticSearch.
 * The plugin makes use of ElasticSearch's ability to make bulk requests. 
-By doing this, we limit the amount of HTTP calls made to the ES engine, therefore minimally impacting the tests performance.
+By doing this, we limit the amount of HTTP calls made to the ES engine, therefore minimally impacting the performance tests.
 * Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``. *Leave it empty if you don't want any filter!
 * You can use either Kibana or Grafana to vizualize your results!
 
@@ -21,6 +21,12 @@ By doing this, we limit the amount of HTTP calls made to the ES engine, therefor
 
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
+
+## Screenshots
+### Configuration
+![screnshot1](https://image.ibb.co/kDH3YH/Screen_Shot_2018_02_23_at_2_18_03_PM.png "Screenshot of configuration")
+### Very simple example of Kibana dashboard
+![screnshot1](https://image.ibb.co/bA1oYH/Screen_Shot_2018_02_23_at_2_37_46_PM.png "Example Kibana dashboard")
 
 ## Sample ElasticSearch Index
 
