@@ -1,6 +1,3 @@
 language: java
 jdk:
 - oraclejdk8
-before_install:
-- openssl aes-256-cbc -K $encrypted_19938b0e6d94_key -iv $encrypted_19938b0e6d94_iv
-  -in all.gpg.enc -out all.gpg -d
