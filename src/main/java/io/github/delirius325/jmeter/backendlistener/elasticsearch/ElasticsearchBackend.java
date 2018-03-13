@@ -15,6 +15,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContextService;
@@ -27,16 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ElasticsearchBackend extends AbstractBackendListenerClient {
-    private static final String BUILD_NUMBER     = "BuildNumber";
-    private static final String ES_SCHEME        = "es.scheme";
-    private static final String ES_HOST          = "es.host";
-    private static final String ES_PORT          = "es.port";
-    private static final String ES_INDEX         = "es.index";
-    private static final String ES_TIMESTAMP     = "es.timestamp";
-    private static final String ES_BULK_SIZE     = "es.bulk.size";
-    private static final String ES_TIMEOUT_MS    = "es.timout.ms";
-    private static final String ES_SAMPLE_FILTER = "es.sample.filter";
-    private static final String ES_TEST_MODE     = "es.test.mode";
+    private static final String BUILD_NUMBER        = "BuildNumber";
+    private static final String ES_SCHEME           = "es.scheme";
+    private static final String ES_HOST             = "es.host";
+    private static final String ES_PORT             = "es.port";
+    private static final String ES_INDEX            = "es.index";
+    private static final String ES_TIMESTAMP        = "es.timestamp";
+    private static final String ES_BULK_SIZE        = "es.bulk.size";
+    private static final String ES_TIMEOUT_MS       = "es.timout.ms";
+    private static final String ES_SAMPLE_FILTER    = "es.sample.filter";
+    private static final String ES_TEST_MODE        = "es.test.mode";
+    private static final String ES_TRANSPORT_CLIENT = "es.transport.client";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
@@ -60,6 +62,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         parameters.addArgument(ES_SAMPLE_FILTER, null);
         parameters.addArgument(ES_TEST_MODE, "debug");
+        //TODO. In future version - add the support for TransportClient as well for the possibility to choose the ElasticSearch version
+        //parameters.addArgument(ES_TRANSPORT_CLIENT, "false");
+        //parameters.addArgument(ES_TRANSPORT_VERSION, "6.2.0");
         return parameters;
     }
 
@@ -191,6 +196,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("ThreadName", sr.getThreadName());
         jsonObject.put("URL", sr.getURL());
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
+        jsonObject.put("StartTimeInMs", sr.getStartTime());
+        jsonObject.put("EndTimeInMs", sr.getEndTime());
+        jsonObject.put("ElapsedTimeInMs", System.currentTimeMillis() - sr.getStartTime());
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
 
         // Add the details according to the mode that is set
@@ -199,13 +207,35 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 jsonObject = addDetails(sr, jsonObject);
                 break;
             case "info":
-                if(!sr.isResponseCodeOK()) {
+                if(!sr.isSuccessful()) {
                     jsonObject = addDetails(sr, jsonObject);
                 }
                 break;
-            default:
-                logger.warn("The parameter \"es.test.mode\" isn't set properly. Two modes are allowed: debug and info. Debug sends request and response details to ElasticSearch. Info only sends the details if the response is an error, it should be used in production.");
+            case "quiet":
                 break;
+            default:
+                logger.warn("The parameter \"es.test.mode\" isn't set properly. Three modes are allowed: debug ,info, and quiet.");
+                logger.warn(" -- \"debug\": sends request and response details to ElasticSearch. Info only sends the details if the response has an error.");
+                logger.warn(" -- \"info\": should be used in production");
+                logger.warn(" -- \"quiet\": should be used if you don't care to have the details.");
+                break;
+        }
+
+        //all assertions
+        AssertionResult[] assertionResults = sr.getAssertionResults();
+        if(assertionResults != null) {
+            Map<String, Object>[] assertionArray = new HashMap[assertionResults.length];
+            Integer i = 0;
+            for(AssertionResult assertionResult : assertionResults) {
+                HashMap<String, Object> assertionMap = new HashMap<>();
+                boolean failure = assertionResult.isFailure() || assertionResult.isError();
+                assertionMap.put("failure", failure);
+                assertionMap.put("failureMessage", assertionResult.getFailureMessage());
+                assertionMap.put("name", assertionResult.getName());
+                assertionArray[i] = assertionMap;
+                i++;
+            }
+            jsonObject.put("AssertionResults", assertionArray);
         }
 
         // If built from Jenkins, add the hard-c                                                                                                                                                                                                                                                                                                                                                                                                                                                               oded version to be able to compare response time
