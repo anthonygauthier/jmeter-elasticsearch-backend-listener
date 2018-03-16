@@ -61,7 +61,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_BULK_SIZE, "100");
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         parameters.addArgument(ES_SAMPLE_FILTER, null);
-        parameters.addArgument(ES_TEST_MODE, "debug");
+        parameters.addArgument(ES_TEST_MODE, "info");
         //TODO. In future version - add the support for TransportClient as well for the possibility to choose the ElasticSearch version
         //parameters.addArgument(ES_TRANSPORT_CLIENT, "false");
         //parameters.addArgument(ES_TRANSPORT_VERSION, "6.2.0");
