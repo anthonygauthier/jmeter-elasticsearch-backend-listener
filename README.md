@@ -15,7 +15,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
   * info : Only send the request/response information of failed requests (headers, body, etc.)
   * quiet : Only send the response time, bytes, and other metrics
 * Use either Kibana or Grafana to vizualize your results!
-  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard)
+  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change de data source!
 
 ### Maven
 ```xml
