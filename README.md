@@ -11,8 +11,8 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 * Filters
   * Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``. *Leave it empty if you don't want any filter!
 * Verbose, semi-verbose, and quiet mode
-  * info : Only send the request/response information of failed requests (headers, body, etc.)
   * debug : Send request/response information of all requests (headers, body, etc.)
+  * info : Only send the request/response information of failed requests (headers, body, etc.)
   * quiet : Only send the response time, bytes, and other metrics
 * Use either Kibana or Grafana to vizualize your results!
 
