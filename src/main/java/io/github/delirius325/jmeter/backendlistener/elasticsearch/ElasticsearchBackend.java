@@ -9,7 +9,6 @@ import java.util.*;
 
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -62,9 +61,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         parameters.addArgument(ES_SAMPLE_FILTER, null);
         parameters.addArgument(ES_TEST_MODE, "info");
-        //TODO. In future version - add the support for TransportClient as well for the possibility to choose the ElasticSearch version
-        //parameters.addArgument(ES_TRANSPORT_CLIENT, "false");
-        //parameters.addArgument(ES_TRANSPORT_VERSION, "6.2.0");
         return parameters;
     }
 
@@ -97,6 +93,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                     this.filters.add(filter);
                 }
             }
+            this.client.performRequest("PUT", "/"+ this.index);
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
