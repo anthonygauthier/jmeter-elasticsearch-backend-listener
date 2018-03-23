@@ -93,7 +93,13 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                     this.filters.add(filter);
                 }
             }
-            this.client.performRequest("PUT", "/"+ this.index);
+
+            try {
+                this.client.performRequest("PUT", "/"+ this.index);
+            } catch(Exception e) {
+                logger.info("Index already exists!");
+            }
+
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
