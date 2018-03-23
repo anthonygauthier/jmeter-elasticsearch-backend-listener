@@ -4,18 +4,25 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 
 ### Features
 
-* The plugin uses the ElasticSearch low-level REST client meaning that it works with any version of ElasticSearch.
-* The plugin makes use of ElasticSearch's ability to make bulk requests. 
-By doing this, we limit the amount of HTTP calls made to the ES engine, therefore minimally impacting the performance tests.
-* Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``. *Leave it empty if you don't want any filter!
-* You can use either Kibana or Grafana to vizualize your results!
+* ElasticSearch low-level REST client
+  * Using the low-level client makes the plugin compatible with any ElasticSearch version
+* Bulk requests
+  * By making bulk requests, there are practically no impacts on the performance of the tests themselves. 
+* Filters
+  * Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``.
+* Verbose, semi-verbose, and quiet mode
+  * debug : Send request/response information of all requests (headers, body, etc.)
+  * info : Only send the request/response information of failed requests (headers, body, etc.)
+  * quiet : Only send the response time, bytes, and other metrics
+* Use either Kibana or Grafana to vizualize your results!
+  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change de data source!
 
 ### Maven
 ```xml
 <dependency>
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.2.2</version>
+  <version>2.2.3</version>
 </dependency>
 ```
 
@@ -24,9 +31,9 @@ Feel free to contribute by branching and making pull requests, or simply by sugg
 
 ## Screenshots
 ### Configuration
-![screnshot1](https://image.ibb.co/kDH3YH/Screen_Shot_2018_02_23_at_2_18_03_PM.png "Screenshot of configuration")
-### Very simple example of Kibana dashboard
-![screnshot1](https://image.ibb.co/bA1oYH/Screen_Shot_2018_02_23_at_2_37_46_PM.png "Example Kibana dashboard")
+![screnshot1](https://image.ibb.co/kPMn2x/Screen_Shot_2018_03_21_at_9_58_25_AM.png "Screenshot of configuration")
+### Sample Grafana dashboard
+![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
 
 ## Sample ElasticSearch Index
 
