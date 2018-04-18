@@ -70,7 +70,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             String host = context.getParameter(ES_HOST);
             this.filters = new LinkedList<String>();
             int port = Integer.parseInt(context.getParameter(ES_PORT));
-            this.index = context.getParameter(ES_INDEX);
+            this.index = context.getParameter(ES_INDEX).toLowerCase();
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
             this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "")
