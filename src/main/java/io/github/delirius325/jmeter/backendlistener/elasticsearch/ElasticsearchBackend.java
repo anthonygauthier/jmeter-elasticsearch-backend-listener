@@ -259,6 +259,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
 
     public HashMap<String, Object> addDetails(SampleResult sr, HashMap<String, Object> jsonObject) {
         jsonObject.put("RequestHeaders", sr.getRequestHeaders());
+        jsonObject.put("RequestBody", sr.getSamplerData());
         jsonObject.put("ResponseHeaders", sr.getResponseHeaders());
         jsonObject.put("ResponseBody", sr.getResponseDataAsString());
         jsonObject.put("ResponseMessage", sr.getResponseMessage());
