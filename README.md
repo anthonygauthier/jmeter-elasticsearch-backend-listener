@@ -31,7 +31,7 @@ Feel free to contribute by branching and making pull requests, or simply by sugg
 
 ## Screenshots
 ### Configuration
-![screnshot1](https://image.ibb.co/kPMn2x/Screen_Shot_2018_03_21_at_9_58_25_AM.png "Screenshot of configuration")
+![screnshot1](https://cdn-images-1.medium.com/max/2000/1*iVb7mIp2dPg7zE4Ph3PrGQ.png "Screenshot of configuration")
 ### Sample Grafana dashboard
 ![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
 
