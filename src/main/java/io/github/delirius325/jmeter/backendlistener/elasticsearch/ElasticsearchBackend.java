@@ -67,17 +67,18 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     @Override
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
-            String host = context.getParameter(ES_HOST);
-            this.filters = new LinkedList<String>();
-            int port = Integer.parseInt(context.getParameter(ES_PORT));
-            this.index = context.getParameter(ES_INDEX).toLowerCase();
-            this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
-            this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-            this.buildNumber  = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "")
-                                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
+            String host  = context.getParameter(ES_HOST);
+            int port     = Integer.parseInt(context.getParameter(ES_PORT));
+            
+            this.filters         = new LinkedList<String>();
+            this.bulkRequestList = new LinkedList<String>();
+            this.index           = context.getParameter(ES_INDEX).toLowerCase();
+            this.bulkSize        = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
+            this.timeoutMs       = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+            this.buildNumber     = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "") ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
             this.client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), port, context.getParameter(ES_SCHEME)))
                     .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
-                            .setSocketTimeout((int) timeoutMs))
+                    .setSocketTimeout((int) timeoutMs))
                     .setFailureListener(new RestClient.FailureListener() {
                         @Override
                         public void onFailure(HttpHost host) {
@@ -86,7 +87,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                     })
                     .setMaxRetryTimeoutMillis(60000)
                     .build();
-            this.bulkRequestList = new LinkedList<String>();
+            
             String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
             if(filterArray.length >= 1 && filterArray[0].trim() != "") {
                 for (String filter : filterArray) {
@@ -123,11 +124,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 }
             }
 
-            if(validSample) {
-                Gson gson = new Gson();
-                String json = gson.toJson(this.getElasticData(sr, context));
-                this.bulkRequestList.add(json);
-            }
+            if(validSample)
+                this.bulkRequestList.add(new Gson().toJson(this.getElasticData(sr, context)));
         }
 
         if(this.bulkRequestList.size() >= this.bulkSize) {
