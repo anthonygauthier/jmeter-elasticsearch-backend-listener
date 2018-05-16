@@ -37,4 +37,4 @@ Feel free to contribute by branching and making pull requests, or simply by sugg
 ![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
 
 ### For more info
-For more information, here's a little (https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki)[documentation].
+For more information, here's a little [documentation](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki).
