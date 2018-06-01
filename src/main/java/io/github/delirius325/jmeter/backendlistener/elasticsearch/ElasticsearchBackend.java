@@ -123,6 +123,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 }
             }
 
+            validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
+
             if(validSample) {
                 Gson gson = new Gson();
                 String json = gson.toJson(this.getElasticData(sr, context));
@@ -176,6 +178,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     }
 
     public Map<String, Object> getElasticData(SampleResult sr, BackendListenerContext context) {
+        String testMode = context.getParameter(ES_TEST_MODE).trim();
         HashMap<String, Object> jsonObject = new HashMap<>();
         SimpleDateFormat sdf = new SimpleDateFormat(context.getParameter(ES_TIMESTAMP));
 
@@ -215,6 +218,9 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 }
                 break;
             case "quiet":
+                break;
+            case "error":
+                jsonObject = addDetails(sr, jsonObject);
                 break;
             default:
                 logger.warn("The parameter \"es.test.mode\" isn't set properly. Three modes are allowed: debug ,info, and quiet.");
