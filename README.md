@@ -22,7 +22,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 <dependency>
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.2.4</version>
+  <version>2.2.5</version>
 </dependency>
 ```
 
@@ -31,119 +31,10 @@ Feel free to contribute by branching and making pull requests, or simply by sugg
 
 ## Screenshots
 ### Configuration
-![screnshot1](https://image.ibb.co/kPMn2x/Screen_Shot_2018_03_21_at_9_58_25_AM.png "Screenshot of configuration")
+![screnshot1](https://cdn-images-1.medium.com/max/2000/1*iVb7mIp2dPg7zE4Ph3PrGQ.png "Screenshot of configuration")
+
 ### Sample Grafana dashboard
 ![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
 
-## Sample ElasticSearch Index
-
-```javascript
-{
-    "template": "jmeter",
-    "mappings": {
-        "SampleResult": {
-            "properties": {
-                "AllThreads": {
-                    "type": "long"
-                },
-                "Assertions": {
-                    "properties": {
-                        "Failure": {
-                            "type": "boolean"
-                        },
-                        "FailureMessage": {
-                            "type": "text",
-                            "index": false
-                        },
-                        "Name": {
-                            "type": "text",
-                            "index": false
-                        }
-                    }
-                },
-                "BodySize": {
-                    "type": "long"
-                },
-                "Bytes": {
-                    "type": "long"
-                },
-                "ConnectTime": {
-                    "type": "long",
-                    "index": false
-                },
-                "ContentType": {
-                    "type": "text",
-                    "index": false
-                },
-                "DataType": {
-                    "type": "text",
-                    "index": false
-                },
-                "EndTime": {
-                    "type": "date",
-                    "format": "dateOptionalTime"
-                },
-                "ErrorCount": {
-                    "type": "long"
-                },
-                "GrpThreads": {
-                    "type": "long",
-                    "index": false
-                },
-                "IdleTime": {
-                    "type": "long"
-                },
-                "Latency": {
-                    "type": "long"
-                },
-                "ResponseCode": {
-                    "type": "text"
-                },
-                "ResponseMessage": {
-                    "type": "text",
-                    "index": false
-                },
-                "ResponseTime": {
-                    "type": "long"
-                },
-                "SampleCount": {
-                    "type": "long"
-                },
-                "SampleLabel": {
-                    "type": "keyword"
-                },
-                "StartTime": {
-                    "type": "date",
-                    "format": "dateOptionalTime"
-                },
-                "Success": {
-                    "type": "text",
-                    "index": false
-                },
-                "ThreadName": {
-                    "type": "keyword",
-                    "index": false
-                },
-                "URL": {
-                    "type": "keyword"
-                },
-                "Timestamp": {
-                    "type": "date",
-                    "format": "dateOptionalTime"
-                },
-                "NormalizedTimestamp": {
-                    "type": "date",
-                    "format": "dateOptionalTime",
-                    "index": false
-                },
-                "BuildNumber": {
-                  "type": "long"
-                },
-                "ElapsedTime": {
-                  "type": "date"
-                }
-            }
-        }
-    }
-}
-```
+### For more info
+For more information, here's a little [documentation](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki).
