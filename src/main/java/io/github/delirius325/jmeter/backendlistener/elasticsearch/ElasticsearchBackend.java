@@ -243,8 +243,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             jsonObject.put("AssertionResults", assertionArray);
         }
 
-        // If built from Jenkins, add the hard-c                                                                                                                                                                                                                                                                                                                                                                                                                                                               oded version to be able to compare response time
-        // of two builds over the elapsed time
+        // If built from Jenkins, add an hard-coded date serving as elapsed time for comparison
+        // This way you can superimpose the two tests and observe the difference in response time
         if(this.buildNumber != 0) {
             Date elapsedTimeComparison = getElapsedTime(true);
             if(elapsedTimeComparison != null)
