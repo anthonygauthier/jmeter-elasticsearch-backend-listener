@@ -114,17 +114,15 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
             String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
             if(this.filters.size() == 0) {
-                validSample = true;
+                validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
             } else {
                 for(String filter : this.filters) {
                     if(filter.toLowerCase().trim().equals(sampleLabel) || sampleLabel.contains(filter.toLowerCase().trim())) {
-                        validSample = true;
+                        validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
                         break;
                     }
                 }
             }
-
-            validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
 
             if(validSample)
                 this.bulkRequestList.add(new Gson().toJson(this.getElasticData(sr, context)));
