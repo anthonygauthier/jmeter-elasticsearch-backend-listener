@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/delirius325/jmeter-elasticsearch-backend-listener.svg?branch=master)](https://travis-ci.org/delirius325/jmeter-elasticsearch-backend-listener)
+
 # Overview
 ### Description
 JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results to an ElasticSearch engine. It is meant as an alternative live-monitoring tool to the built-in "InfluxDB" backend listener of JMeter. 
