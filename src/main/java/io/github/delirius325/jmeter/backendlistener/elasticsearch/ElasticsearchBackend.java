@@ -14,10 +14,12 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.apache.jmeter.JMeter;
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContextService;
+import org.apache.jmeter.threads.JMeterVariables;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
@@ -37,7 +39,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private static final String ES_TIMEOUT_MS       = "es.timout.ms";
     private static final String ES_SAMPLE_FILTER    = "es.sample.filter";
     private static final String ES_TEST_MODE        = "es.test.mode";
-    private static final String ES_TRANSPORT_CLIENT = "es.transport.client";
+    private static final String ES_INCLUDE_VARS     = "es.include.all.vars";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackend.class);
 
@@ -61,6 +63,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         parameters.addArgument(ES_SAMPLE_FILTER, null);
         parameters.addArgument(ES_TEST_MODE, "info");
+        parameters.addArgument(ES_INCLUDE_VARS, "false");
         return parameters;
     }
 
@@ -201,6 +204,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("StartTimeInMs", sr.getStartTime());
         jsonObject.put("EndTimeInMs", sr.getEndTime());
         jsonObject.put("ElapsedTimeInMs", System.currentTimeMillis() - sr.getStartTime());
+        jsonObject.put("ResponseCode", (sr.getResponseCode()));
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
 
         // Add the details according to the mode that is set
@@ -254,7 +258,35 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         Date elapsedTime = getElapsedTime(false);
         if(elapsedTime != null)
             jsonObject.put("ElapsedTime", elapsedTime);
-        jsonObject.put("ResponseCode", (sr.getResponseCode()));
+
+//        //Add all variables (if set to true)
+//        if(Boolean.parseBoolean(context.getParameter(ES_INCLUDE_VARS))) {
+//            try {
+//                System.out.println(JMeterContextService.getContext().getVariables());
+//
+//                JMeterVariables vars = JMeterContextService.getContext().getCurrentSampler().getThreadContext().getVariables();
+//                if(vars != null) {
+//                    System.out.println("Before foreach");
+//                    for(Map.Entry<String, Object> variable : vars.entrySet()) {
+//                        System.out.println("In foreach");
+//                        jsonObject.put(variable.getKey(), variable.getValue().toString());
+//                    }
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+
+        // Add all custom fields (if any)
+        Iterator<String> pluginParameters = context.getParameterNamesIterator();
+        while(pluginParameters.hasNext()) {
+            String parameterName = pluginParameters.next();
+
+            if(!parameterName.contains("es.") && !context.getParameter(parameterName).trim().equals("")) {
+                jsonObject.put(parameterName, context.getParameter(parameterName).trim());
+            }
+        }
+
 
         return jsonObject;
     }
