@@ -202,8 +202,8 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("URL", sr.getURL());
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
         jsonObject.put("StartTimeInMs", sr.getStartTime());
-        jsonObject.put("EndTimeInMs", sr.getEndTime());
-        jsonObject.put("ElapsedTimeInMs", System.currentTimeMillis() - sr.getStartTime());
+        jsonObject.put("EndTimeInMs", sdf.format(new Date(sr.getEndTime())));
+//        jsonObject.put("ElapsedTimeInMs", sdf.format(new Date(System.currentTimeMillis() - sr.getStartTime())));
         jsonObject.put("ResponseCode", (sr.getResponseCode()));
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
 
@@ -252,30 +252,12 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         if(this.buildNumber != 0) {
             Date elapsedTimeComparison = getElapsedTime(true);
             if(elapsedTimeComparison != null)
-                jsonObject.put("ElapsedTimeComparison", elapsedTimeComparison);
+                jsonObject.put("ElapsedTimeComparison", sdf.format(elapsedTimeComparison));
         }
 
         Date elapsedTime = getElapsedTime(false);
         if(elapsedTime != null)
-            jsonObject.put("ElapsedTime", elapsedTime);
-
-//        //Add all variables (if set to true)
-//        if(Boolean.parseBoolean(context.getParameter(ES_INCLUDE_VARS))) {
-//            try {
-//                System.out.println(JMeterContextService.getContext().getVariables());
-//
-//                JMeterVariables vars = JMeterContextService.getContext().getCurrentSampler().getThreadContext().getVariables();
-//                if(vars != null) {
-//                    System.out.println("Before foreach");
-//                    for(Map.Entry<String, Object> variable : vars.entrySet()) {
-//                        System.out.println("In foreach");
-//                        jsonObject.put(variable.getKey(), variable.getValue().toString());
-//                    }
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
+            jsonObject.put("ElapsedTime", sdf.format(elapsedTime));
 
         // Add all custom fields (if any)
         Iterator<String> pluginParameters = context.getParameterNamesIterator();
@@ -286,7 +268,6 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 jsonObject.put(parameterName, context.getParameter(parameterName).trim());
             }
         }
-
 
         return jsonObject;
     }
