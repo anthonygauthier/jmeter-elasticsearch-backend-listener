@@ -20,12 +20,13 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 * Use either Kibana or Grafana to vizualize your results!
   * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change de data source!
 * Continuous Integration support - [Build comparison!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Continuous-Integration---Build-Comparison)
+* Send custom metrics/values to your ElasticSearch! Simply add a new field in the backend listener's configuration. For example: ```myKey:myValue```
 ### Maven
 ```xml
 <dependency>
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.3.1</version>
+  <version>2.3.2</version>
 </dependency>
 ```
 
