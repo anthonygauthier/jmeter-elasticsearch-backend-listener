@@ -1,6 +1,7 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
     private List<String> filters;
     private RestClient client;
     private String index;
+    private String injectorHostname;
     private int buildNumber;
     private int bulkSize;
     private long timeoutMs;
@@ -72,13 +74,14 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         try {
             String host  = context.getParameter(ES_HOST);
             int port     = Integer.parseInt(context.getParameter(ES_PORT));
-            
-            this.filters         = new LinkedList<String>();
-            this.bulkRequestList = new LinkedList<String>();
-            this.index           = context.getParameter(ES_INDEX).toLowerCase();
-            this.bulkSize        = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
-            this.timeoutMs       = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-            this.buildNumber     = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "") ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
+
+            this.injectorHostname = InetAddress.getLocalHost().getHostName();
+            this.filters          = new LinkedList<String>();
+            this.bulkRequestList  = new LinkedList<String>();
+            this.index            = context.getParameter(ES_INDEX).toLowerCase();
+            this.bulkSize         = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
+            this.timeoutMs        = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+            this.buildNumber      = (JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER).trim() != "") ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackend.BUILD_NUMBER)) : 0;
             this.client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), port, context.getParameter(ES_SCHEME)))
                     .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
                     .setSocketTimeout((int) timeoutMs))
@@ -203,7 +206,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         jsonObject.put("Timestamp", sdf.format(new Date(sr.getTimeStamp())));
         jsonObject.put("StartTimeInMs", sr.getStartTime());
         jsonObject.put("EndTimeInMs", sdf.format(new Date(sr.getEndTime())));
-//        jsonObject.put("ElapsedTimeInMs", sdf.format(new Date(System.currentTimeMillis() - sr.getStartTime())));
+        jsonObject.put("InjectorHostname", this.injectorHostname);
         jsonObject.put("ResponseCode", (sr.getResponseCode()));
         jsonObject.put(ElasticsearchBackend.BUILD_NUMBER, this.buildNumber);
 
