@@ -27,18 +27,27 @@ public class ElasticSearchMetricSender {
         this.metricList = new LinkedList<String>();
     }
 
-    public int getListSize() {
-        return this.metricList.size();
-    }
+    /**
+     * This method returns the current size of the ElasticSearch documents list
+     * @return integer representing the size of the ElasticSearch documents list
+     */
+    public int getListSize() { return this.metricList.size(); }
 
-    public void clearList() {
-        this.metricList.clear();
-    }
+    /**
+     * This method clears the ElasticSearch documents list
+     */
+    public void clearList() { this.metricList.clear(); }
 
-    public void addToList(String metric) {
-        this.metricList.add(metric);
-    }
+    /**
+     * This method adds a metric to the list (metricList).
+     * @param metric String parameter representing a JSON document for ElasticSearch
+     */
+    public void addToList(String metric) { this.metricList.add(metric); }
 
+    /**
+     * This method creates the ElasticSearch index.
+     * Throws an exception if index already exists.
+     */
     public void createIndex() {
         try {
             this.client.performRequest("PUT", "/"+ this.esIndex);
@@ -47,6 +56,11 @@ public class ElasticSearchMetricSender {
         }
     }
 
+    /**
+     * This method sends the ElasticSearch documents for each document present in the list (metricList).
+     * All is being sent through the low-level ElasticSearch REST Client.
+     * @throws IOException
+     */
     public void sendRequest() throws IOException {
         String actionMetaData = String.format("{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\" } }%n", this.esIndex, "SampleResult");
 
