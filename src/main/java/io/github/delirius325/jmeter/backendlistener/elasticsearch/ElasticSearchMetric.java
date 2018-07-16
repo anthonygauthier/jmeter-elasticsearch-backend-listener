@@ -32,9 +32,9 @@ public class ElasticSearchMetric {
     }
 
     /**
-     * This method returns the current metric as JSON (Map<String, Object>) for the provided sampleResult
+     * This method returns the current metric as a Map(String, Object) for the provided sampleResult
      * @param context BackendListenerContext
-     * @return a JSON Object as Map<String, Object>
+     * @return a JSON Object as Map(String, Object)
      */
     public Map<String, Object> getMetric(BackendListenerContext context) throws Exception {
         SimpleDateFormat sdf = new SimpleDateFormat(this.esTimestamp);
