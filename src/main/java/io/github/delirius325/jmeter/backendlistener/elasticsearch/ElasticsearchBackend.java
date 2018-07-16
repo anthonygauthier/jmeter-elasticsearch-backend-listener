@@ -130,6 +130,13 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
                 }
             }
 
+            System.out.println("-----------------------------");
+            System.out.println("iteration: " + JMeterContextService.getContext().getVariables().getIteration());
+
+            JMeterContextService.getClientSideVariables().entrySet().forEach(variable -> {
+                    System.out.println(variable.getKey() + " : " + variable.getValue());
+            });
+
             if(validSample)
                 this.bulkRequestList.add(new Gson().toJson(this.getElasticData(sr, context)));
         }
@@ -150,7 +157,7 @@ public class ElasticsearchBackend extends AbstractBackendListenerClient {
         if(this.bulkRequestList.size() > 0) {
             sendRequest(this.bulkRequestList);
         }
-        IOUtils.closeQuietly(client);
+        client.close();
         super.teardownTest(context);
     }
     
