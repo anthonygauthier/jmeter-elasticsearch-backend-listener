@@ -4,7 +4,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
-import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ElasticSearchMetricSender {
-    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetricSender.class);
 
     private RestClient client;
     private String esIndex;
@@ -34,12 +33,14 @@ public class ElasticSearchMetricSender {
     public int getListSize() { return this.metricList.size(); }
 
     /**
-     * This method closes the REST client and clears the ElasticSearch documents list
+     * This method clears the ElasticSearch documents list
      */
-    public void closeAndClear() throws IOException {
-        this.client.close();
-        this.metricList.clear();
-    }
+    public void closeConnection() throws IOException { this.client.close(); }
+
+    /**
+     * This method closes the REST client
+     */
+    public void clearList() { this.metricList.clear(); }
 
     /**
      * This method adds a metric to the list (metricList).
@@ -62,9 +63,8 @@ public class ElasticSearchMetricSender {
     /**
      * This method sends the ElasticSearch documents for each document present in the list (metricList).
      * All is being sent through the low-level ElasticSearch REST Client.
-     * @throws IOException
      */
-    public void sendRequest() throws IOException {
+    public void sendRequest() {
         String actionMetaData = String.format("{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\" } }%n", this.esIndex, "SampleResult");
 
         StringBuilder bulkRequestBody = new StringBuilder();

@@ -11,8 +11,7 @@ import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String BUILD_NUMBER        = "BuildNumber";
@@ -30,6 +29,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
 
     private ElasticSearchMetricSender sender;
+    private Set<String> modes;
     private List<String> filters;
     private RestClient client;
     private int buildNumber;
@@ -56,6 +56,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
             this.filters = new LinkedList<String>();
+            this.modes = new HashSet<>(Arrays.asList("info","debug","error","quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim() != "") ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
@@ -72,6 +73,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     .build();
             this.sender = new ElasticSearchMetricSender(this.client, context.getParameter(ES_INDEX).toLowerCase());
             this.sender.createIndex();
+
+            checkTestMode(context.getParameter(ES_TEST_MODE));
             
             String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
             if(filterArray.length >= 1 && filterArray[0].trim() != "") {
@@ -131,7 +134,20 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         if(this.sender.getListSize() > 0) {
             this.sender.sendRequest();
         }
-        client.close();
+        this.sender.closeConnection();
         super.teardownTest(context);
+    }
+
+    /**
+     * This method checks if the test mode is valid
+     * @param mode The test mode as String
+     */
+    private void checkTestMode(String mode) {
+        if(!this.modes.contains(mode)) {
+            logger.warn("The parameter \"es.test.mode\" isn't set properly. Three modes are allowed: debug ,info, and quiet.");
+            logger.warn(" -- \"debug\": sends request and response details to ElasticSearch. Info only sends the details if the response has an error.");
+            logger.warn(" -- \"info\": should be used in production");
+            logger.warn(" -- \"quiet\": should be used if you don't care to have the details.");
+        }
     }
 }

@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class ElasticSearchMetric {
-    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
 
     private SampleResult sampleResult;
     private String esTestMode;
@@ -25,8 +25,8 @@ public class ElasticSearchMetric {
 
     public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber) {
         this.sampleResult = sr;
-        this.esTestMode = testMode;
-        this.esTimestamp = timeStamp;
+        this.esTestMode = testMode.trim();
+        this.esTimestamp = timeStamp.trim();
         this.ciBuildNumber = buildNumber;
         this.json = new HashMap<>();
     }
@@ -63,17 +63,17 @@ public class ElasticSearchMetric {
         this.json.put("InjectorHostname",  InetAddress.getLocalHost().getHostName());
 
         // Add the details according to the mode that is set
-        if(this.esTestMode == "debug" || this.esTestMode == "error") {
-            addDetails();
-        } else if (this.esTestMode == "info") {
-            if(!this.sampleResult.isSuccessful()) {
+        switch(this.esTestMode) {
+            case "debug":
                 addDetails();
-            }
-        } else if (this.esTestMode != "quiet") {
-            logger.warn("The parameter \"es.test.mode\" isn't set properly. Three modes are allowed: debug ,info, and quiet.");
-            logger.warn(" -- \"debug\": sends request and response details to ElasticSearch. Info only sends the details if the response has an error.");
-            logger.warn(" -- \"info\": should be used in production");
-            logger.warn(" -- \"quiet\": should be used if you don't care to have the details.");
+                break;
+            case "error":
+                addDetails();
+                break;
+            case "info":
+                if(!this.sampleResult.isSuccessful())
+                    addDetails();
+                break;
         }
 
         addAssertions();
