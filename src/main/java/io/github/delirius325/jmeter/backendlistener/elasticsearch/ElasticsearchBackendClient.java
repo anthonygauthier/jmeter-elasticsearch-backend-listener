@@ -75,6 +75,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     })
                     .setMaxRetryTimeoutMillis(60000)
                     .build();
+
             this.sender = new ElasticSearchMetricSender(this.client, context.getParameter(ES_INDEX).toLowerCase() ,context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD));
             this.sender.createIndex();
 
