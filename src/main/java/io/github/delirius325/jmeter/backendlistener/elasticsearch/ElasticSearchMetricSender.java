@@ -1,8 +1,10 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -19,11 +21,17 @@ public class ElasticSearchMetricSender {
     private RestClient client;
     private String esIndex;
     private List<String> metricList;
+    private String authUser;
+    private String authPwd;
+    private BasicHeader authHeader;
 
-    public ElasticSearchMetricSender(RestClient cli, String index) {
+    public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd) {
         this.client = cli;
         this.esIndex = index;
         this.metricList = new LinkedList<String>();
+        this.authUser = user.trim();
+        this.authPwd = pwd.trim();
+        this.authHeader = null;
     }
 
     /**
@@ -76,7 +84,16 @@ public class ElasticSearchMetricSender {
 
         HttpEntity entity = new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON);
         try {
-            Response response = this.client.performRequest("POST", "/"+ this.esIndex +"/SampleResult/_bulk", Collections.emptyMap(), entity);
+            if(!this.authUser.equals("") && !this.authPwd.equals("")) {
+                String encodedCredentials = Base64.getEncoder().encodeToString((this.authUser + ":" + this.authPwd).getBytes());
+
+                this.authHeader = new BasicHeader("Authorization", "Basic " + encodedCredentials);
+            }
+
+            Response response = (this.authHeader != null)
+                ? this.client.performRequest("POST", "/"+ this.esIndex +"/SampleResult/_bulk", Collections.emptyMap(), entity, this.authHeader)
+                : this.client.performRequest("POST", "/"+ this.esIndex +"/SampleResult/_bulk", Collections.emptyMap(), entity);
+
             if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if(logger.isErrorEnabled()) {
                     logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
