@@ -25,6 +25,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_SAMPLE_FILTER    = "es.sample.filter";
     private static final String ES_TEST_MODE        = "es.test.mode";
     private static final String ES_INCLUDE_VARS     = "es.include.all.vars";
+    private static final String ES_AUTH_USER        = "es.xpack.user";
+    private static final String ES_AUTH_PWD         = "es.xpack.password";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
 
@@ -49,6 +51,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_SAMPLE_FILTER, null);
         parameters.addArgument(ES_TEST_MODE, "info");
         parameters.addArgument(ES_INCLUDE_VARS, "false");
+        parameters.addArgument(ES_AUTH_USER, "");
+        parameters.addArgument(ES_AUTH_PWD, "");
         return parameters;
     }
 
@@ -71,7 +75,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     })
                     .setMaxRetryTimeoutMillis(60000)
                     .build();
-            this.sender = new ElasticSearchMetricSender(this.client, context.getParameter(ES_INDEX).toLowerCase());
+            this.sender = new ElasticSearchMetricSender(this.client, context.getParameter(ES_INDEX).toLowerCase() ,context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD));
             this.sender.createIndex();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
