@@ -8,6 +8,8 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 
 * ElasticSearch low-level REST client
   * Using the low-level client makes the plugin compatible with any ElasticSearch version
+* X-Pack Authentication!
+  * Just supply your crendentials in the specified fields!
 * Bulk requests
   * By making bulk requests, there are practically no impacts on the performance of the tests themselves. 
 * Filters
