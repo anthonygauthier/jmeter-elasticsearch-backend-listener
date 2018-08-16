@@ -1,6 +1,5 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;

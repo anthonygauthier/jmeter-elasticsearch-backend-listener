@@ -1,5 +1,6 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
+import javafx.util.StringConverter;
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.threads.JMeterContextService;
@@ -22,6 +23,17 @@ public class ElasticSearchMetric {
     private String esTimestamp;
     private int ciBuildNumber;
     private HashMap<String, Object> json;
+    private StringConverter<Long> stringConvert = new StringConverter<Long>() {
+        @Override
+        public String toString(Long object) {
+            return String.valueOf(object);
+        }
+
+        @Override
+        public Long fromString(String string) {
+            return Long.parseLong(string);
+        }
+    };
 
     public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber) {
         this.sampleResult = sr;
@@ -139,7 +151,15 @@ public class ElasticSearchMetric {
             String parameterName = pluginParameters.next();
 
             if(!parameterName.contains("es.") && !context.getParameter(parameterName).trim().equals("")) {
-                this.json.put(parameterName, context.getParameter(parameterName).trim());
+                String parameter = context.getParameter(parameterName).trim();
+
+                try {
+                    this.json.put(parameterName, stringConvert.fromString(parameter));
+                } catch(Exception e) {
+                    if(logger.isDebugEnabled())
+                        logger.debug("Cannot convert custom field to number");
+                    this.json.put(parameterName, context.getParameter(parameterName).trim());
+                }
             }
         }
     }
