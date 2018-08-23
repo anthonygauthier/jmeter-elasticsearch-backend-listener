@@ -166,7 +166,7 @@ public class ElasticSearchMetric {
     }
 
     /**
-     * This method is meant to return the elapsed time a human readable format. The purpose of this is
+     * This method is meant to return the elapsed time in a human readable format. The purpose of this is
      * mostly for build comparison in Kibana. By doing this, the user is able to set the X-axis of his graph
      * to this date and split the series by build numbers. It allows him to overlap test results and see if
      * there is regression or not.

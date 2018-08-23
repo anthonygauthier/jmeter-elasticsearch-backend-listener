@@ -40,12 +40,12 @@ public class ElasticSearchMetricSender {
     public int getListSize() { return this.metricList.size(); }
 
     /**
-     * This method clears the ElasticSearch documents list
+     * This method closes the REST client
      */
     public void closeConnection() throws IOException { this.client.close(); }
 
     /**
-     * This method closes the REST client
+     * This method clears the ElasticSearch documents list
      */
     public void clearList() { this.metricList.clear(); }
 
