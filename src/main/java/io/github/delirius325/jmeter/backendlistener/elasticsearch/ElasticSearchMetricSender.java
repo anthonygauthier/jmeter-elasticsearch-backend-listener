@@ -5,6 +5,8 @@ import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
@@ -22,7 +24,6 @@ public class ElasticSearchMetricSender {
     private List<String> metricList;
     private String authUser;
     private String authPwd;
-    private BasicHeader authHeader;
 
     public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd) {
         this.client = cli;
@@ -30,7 +31,6 @@ public class ElasticSearchMetricSender {
         this.metricList = new LinkedList<String>();
         this.authUser = user.trim();
         this.authPwd = pwd.trim();
-        this.authHeader = null;
     }
 
     /**
@@ -72,9 +72,10 @@ public class ElasticSearchMetricSender {
      * All is being sent through the low-level ElasticSearch REST Client.
      */
     public void sendRequest() {
+        Request request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
+        StringBuilder bulkRequestBody = new StringBuilder();
         String actionMetaData = String.format("{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\" } }%n", this.esIndex, "SampleResult");
 
-        StringBuilder bulkRequestBody = new StringBuilder();
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);
             bulkRequestBody.append(metric);
@@ -82,16 +83,17 @@ public class ElasticSearchMetricSender {
         }
 
         HttpEntity entity = new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON);
+        request.setEntity(entity);
+
         try {
             if(!this.authUser.equals("") && !this.authPwd.equals("")) {
                 String encodedCredentials = Base64.getEncoder().encodeToString((this.authUser + ":" + this.authPwd).getBytes());
-
-                this.authHeader = new BasicHeader("Authorization", "Basic " + encodedCredentials);
+                RequestOptions.Builder options = request.getOptions().toBuilder();
+                options.addHeader("Authorization", "Basic " + encodedCredentials);
+                request.setOptions(options);
             }
 
-            Response response = (this.authHeader != null)
-                ? this.client.performRequest("POST", "/"+ this.esIndex +"/SampleResult/_bulk", Collections.emptyMap(), entity, this.authHeader)
-                : this.client.performRequest("POST", "/"+ this.esIndex +"/SampleResult/_bulk", Collections.emptyMap(), entity);
+            Response response = this.client.performRequest(request);
 
             if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 if(logger.isErrorEnabled()) {

@@ -79,6 +79,7 @@ public class ElasticSearchMetric {
         addAssertions();
         addElapsedTime(sdf);
         addCustomFields(context);
+        checkCustomVariables();
 
         return this.json;
     }
@@ -163,6 +164,24 @@ public class ElasticSearchMetric {
         this.json.put("ResponseHeaders", this.sampleResult.getResponseHeaders());
         this.json.put("ResponseBody", this.sampleResult.getResponseDataAsString());
         this.json.put("ResponseMessage", this.sampleResult.getResponseMessage());
+    }
+
+    /**
+     * This method will parse the headers and look for custom variables passed through as header.
+     * This is a work-around the native behaviour of JMeter where variables are not accessible within the
+     * backend listener.
+     *
+     * NOTE: This will be fixed as soon as a patch comes in for JMeter to change the behaviour.
+     */
+    private void checkCustomVariables() {
+        String[] lines = this.sampleResult.getRequestHeaders().split("\n");
+
+        for(int i=0; i < lines.length; i++) {
+            String[] header = lines[i].split(":");
+            if(header[0].contains("es-")) {
+                this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
+            }
+        }
     }
 
     /**

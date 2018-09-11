@@ -7,6 +7,7 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
+import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     .setSocketTimeout((int) timeoutMs))
                     .setFailureListener(new RestClient.FailureListener() {
                         @Override
-                        public void onFailure(HttpHost host) {
+                        public void onFailure(Node node) {
                             throw new IllegalStateException();
                         }
                     })
