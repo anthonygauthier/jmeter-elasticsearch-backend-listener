@@ -178,7 +178,7 @@ public class ElasticSearchMetric {
 
         for(int i=0; i < lines.length; i++) {
             String[] header = lines[i].split(":");
-            if(header[0].contains("es-")) {
+            if(header[0].startsWith("es-")) {
                 this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
             }
         }
