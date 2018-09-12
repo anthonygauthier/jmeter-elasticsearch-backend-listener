@@ -82,8 +82,7 @@ public class ElasticSearchMetricSender {
             bulkRequestBody.append("\n");
         }
 
-        HttpEntity entity = new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON);
-        request.setEntity(entity);
+        request.setEntity(new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON));
 
         try {
             if(!this.authUser.equals("") && !this.authPwd.equals("")) {

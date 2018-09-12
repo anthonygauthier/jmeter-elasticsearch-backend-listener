@@ -32,7 +32,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
-    private List<String> filters;
+    private Set<String> filters;
     private RestClient client;
     private int buildNumber;
     private int bulkSize;
@@ -58,7 +58,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     @Override
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
-            this.filters = new LinkedList<String>();
+            this.filters = new HashSet<>();
             this.modes = new HashSet<>(Arrays.asList("info","debug","error","quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
@@ -83,7 +83,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
             if(filterArray.length >= 1 && filterArray[0].trim() != "") {
                 for (String filter : filterArray) {
-                    this.filters.add(filter);
+                    this.filters.add(filter.toLowerCase().trim());
                 }
             }
 
@@ -97,21 +97,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
             ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE), context.getParameter(ES_TIMESTAMP), this.buildNumber);
-            boolean validSample = false;
-            String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
-            if(this.filters.size() == 0) {
-                validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
-            } else {
-                for(String filter : this.filters) {
-                    if(filter.toLowerCase().trim().equals(sampleLabel) || sampleLabel.contains(filter.toLowerCase().trim())) {
-                        validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
-                        break;
-                    }
-                }
-            }
-
-            if(validSample) {
+            if(validateSample(context, sr)) {
                 try {
                     this.sender.addToList(new Gson().toJson(metric.getMetric(context)));
                 } catch (Exception e) {
@@ -151,7 +138,25 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             logger.warn("The parameter \"es.test.mode\" isn't set properly. Three modes are allowed: debug ,info, and quiet.");
             logger.warn(" -- \"debug\": sends request and response details to ElasticSearch. Info only sends the details if the response has an error.");
             logger.warn(" -- \"info\": should be used in production");
+            logger.warn(" -- \"error\": should be used if you.");
             logger.warn(" -- \"quiet\": should be used if you don't care to have the details.");
         }
+    }
+
+    /**
+     * This method will validate the current sample to see if it is part of the filters or not.
+     * @param context The Backend Listener's context
+     * @param sr The current SampleResult
+     * @return true or false depending on whether or not the sample is valid
+     */
+    private boolean validateSample(BackendListenerContext context, SampleResult sr) {
+        boolean validSample = false;
+        String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
+
+        if(this.filters.size() == 0 || this.filters.contains(sampleLabel)) {
+            validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
+        }
+
+        return validSample;
     }
 }
