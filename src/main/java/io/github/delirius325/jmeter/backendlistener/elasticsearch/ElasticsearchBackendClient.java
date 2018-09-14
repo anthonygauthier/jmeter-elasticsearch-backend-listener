@@ -27,6 +27,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_TEST_MODE        = "es.test.mode";
     private static final String ES_AUTH_USER        = "es.xpack.user";
     private static final String ES_AUTH_PWD         = "es.xpack.password";
+    private static final String ES_PARSE_HEADERS    = "es.parse.all.headers";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
 
@@ -52,6 +53,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_TEST_MODE, "info");
         parameters.addArgument(ES_AUTH_USER, "");
         parameters.addArgument(ES_AUTH_PWD, "");
+        parameters.addArgument(ES_PARSE_HEADERS, "false");
         return parameters;
     }
 
@@ -96,7 +98,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
-            ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE), context.getParameter(ES_TIMESTAMP), this.buildNumber);
+            ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE), context.getParameter(ES_TIMESTAMP), this.buildNumber, context.getBooleanParameter(ES_PARSE_HEADERS, false));
 
             if(validateSample(context, sr)) {
                 try {

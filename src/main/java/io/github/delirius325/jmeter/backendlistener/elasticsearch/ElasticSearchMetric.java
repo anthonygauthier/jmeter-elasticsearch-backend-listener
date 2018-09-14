@@ -22,13 +22,15 @@ public class ElasticSearchMetric {
     private String esTimestamp;
     private int ciBuildNumber;
     private HashMap<String, Object> json;
+    private boolean all;
 
-    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber) {
+    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber, boolean parseHeaders) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
         this.ciBuildNumber = buildNumber;
         this.json = new HashMap<>();
+        this.all = parseHeaders;
     }
 
     /**
@@ -79,7 +81,7 @@ public class ElasticSearchMetric {
         addAssertions();
         addElapsedTime(sdf);
         addCustomFields(context);
-        checkCustomVariables();
+        parseHeadersAsDocumentProps(this.all);
 
         return this.json;
     }
@@ -181,7 +183,7 @@ public class ElasticSearchMetric {
 
         for(int i=0; i < lines.length; i++) {
             String[] header = lines[i].split(":");
-            if(!all) {
+            if(!this.all) {
                 if(header[0].startsWith("X-es-backend")) {
                     this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
                 }
