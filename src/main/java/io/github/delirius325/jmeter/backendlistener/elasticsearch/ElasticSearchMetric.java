@@ -167,18 +167,25 @@ public class ElasticSearchMetric {
     }
 
     /**
-     * This method will parse the headers and look for custom variables passed through as header.
+     * This method will parse the headers and look for custom variables passed through as header. It can also
+     * seperate all headers into different ElasticSearch document properties by passing "true"
      * This is a work-around the native behaviour of JMeter where variables are not accessible within the
      * backend listener.
      *
+     * @param all boolean to determine if the user wants to separate ALL headers into different ES properties.
+     *
      * NOTE: This will be fixed as soon as a patch comes in for JMeter to change the behaviour.
      */
-    private void checkCustomVariables() {
+    private void parseHeadersAsDocumentProps(boolean all) {
         String[] lines = this.sampleResult.getRequestHeaders().split("\n");
 
         for(int i=0; i < lines.length; i++) {
             String[] header = lines[i].split(":");
-            if(header[0].startsWith("es-")) {
+            if(!all) {
+                if(header[0].startsWith("X-es-backend")) {
+                    this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
+                }
+            } else {
                 this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
             }
         }
