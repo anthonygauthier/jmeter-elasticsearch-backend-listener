@@ -6,8 +6,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.jmeter.samplers.SampleResult;
-import org.apache.jmeter.threads.JMeterContext;
-import org.apache.jmeter.threads.JMeterContextService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,8 +15,8 @@ public class TestElasticSearchBackend {
 
     @Before
     public void setUp() throws Exception {
-        metricCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 1, false);
-        metricNoCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 0, false);
+        metricCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 1, false, false);
+        metricNoCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 0, false, false);
     }
 
     @Test
