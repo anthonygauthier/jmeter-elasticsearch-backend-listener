@@ -1,9 +1,7 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.entity.NStringEntity;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
@@ -94,10 +92,8 @@ public class ElasticSearchMetricSender {
 
             Response response = this.client.performRequest(request);
 
-            if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-                if(logger.isErrorEnabled()) {
-                    logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
-                }
+            if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
+                logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
             }
         } catch (Exception e) {
             if(logger.isErrorEnabled()) {

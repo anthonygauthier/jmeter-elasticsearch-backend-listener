@@ -22,15 +22,17 @@ public class ElasticSearchMetric {
     private String esTimestamp;
     private int ciBuildNumber;
     private HashMap<String, Object> json;
-    private boolean all;
+    private boolean allReqHeaders;
+    private boolean allResHeaders;
 
-    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber, boolean parseHeaders) {
+    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber, boolean parseReqHeaders, boolean parseResHeaders) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
         this.ciBuildNumber = buildNumber;
         this.json = new HashMap<>();
-        this.all = parseHeaders;
+        this.allReqHeaders = parseReqHeaders;
+        this.allResHeaders = parseResHeaders;
     }
 
     /**
@@ -76,12 +78,14 @@ public class ElasticSearchMetric {
                 if(!this.sampleResult.isSuccessful())
                     addDetails();
                 break;
+            default:
+                break;
         }
 
         addAssertions();
         addElapsedTime(sdf);
         addCustomFields(context);
-        parseHeadersAsDocumentProps(this.all);
+        parseHeadersAsJsonProps(this.allReqHeaders, this.allResHeaders);
 
         return this.json;
     }
@@ -174,21 +178,31 @@ public class ElasticSearchMetric {
      * This is a work-around the native behaviour of JMeter where variables are not accessible within the
      * backend listener.
      *
-     * @param all boolean to determine if the user wants to separate ALL headers into different ES properties.
+     * @param allReqHeaders boolean to determine if the user wants to separate ALL request headers into different ES JSON properties.
+     * @param allResHeaders boolean to determine if the user wants to separate ALL response headers into different ES JSON properties.
      *
      * NOTE: This will be fixed as soon as a patch comes in for JMeter to change the behaviour.
      */
-    private void parseHeadersAsDocumentProps(boolean all) {
-        String[] lines = this.sampleResult.getRequestHeaders().split("\n");
+    private void parseHeadersAsJsonProps(boolean allReqHeaders, boolean allResHeaders) {
+        LinkedList<String[]> headersArrayList = new LinkedList<String[]>();
 
-        for(int i=0; i < lines.length; i++) {
-            String[] header = lines[i].split(":");
-            if(!this.all) {
-                if(header[0].startsWith("X-es-backend")) {
+        if(allReqHeaders) {
+            headersArrayList.add(this.sampleResult.getRequestHeaders().split("\n"));
+        }
+
+        if(allResHeaders) {
+            headersArrayList.add(this.sampleResult.getResponseHeaders().split("\n"));
+        }
+
+        for(String[] lines : headersArrayList) {
+            for(int i=0; i < lines.length; i++) {
+                String[] header = lines[i].split(":");
+                // if not all req headers and header contains special X-tag
+                if(!this.allReqHeaders && header[0].startsWith("X-es-backend")) {
+                    this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
+                } else {
                     this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
                 }
-            } else {
-                this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
             }
         }
     }

@@ -27,14 +27,14 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_TEST_MODE        = "es.test.mode";
     private static final String ES_AUTH_USER        = "es.xpack.user";
     private static final String ES_AUTH_PWD         = "es.xpack.password";
-    private static final String ES_PARSE_HEADERS    = "es.parse.all.headers";
+    private static final String ES_PARSE_REQ_HEADERS    = "es.parse.all.req.headers";
+    private static final String ES_PARSE_RES_HEADERS    = "es.parse.all.res.headers";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
 
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
     private Set<String> filters;
-    private RestClient client;
     private int buildNumber;
     private int bulkSize;
     private long timeoutMs;
@@ -53,7 +53,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_TEST_MODE, "info");
         parameters.addArgument(ES_AUTH_USER, "");
         parameters.addArgument(ES_AUTH_PWD, "");
-        parameters.addArgument(ES_PARSE_HEADERS, "false");
+        parameters.addArgument(ES_PARSE_REQ_HEADERS, "false");
+        parameters.addArgument(ES_PARSE_RES_HEADERS, "false");
         return parameters;
     }
 
@@ -64,8 +65,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.modes = new HashSet<>(Arrays.asList("info","debug","error","quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
-            this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null && JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim() != "") ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
-            this.client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), Integer.parseInt(context.getParameter(ES_PORT)), context.getParameter(ES_SCHEME)))
+            this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals("")) ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
+            RestClient client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), Integer.parseInt(context.getParameter(ES_PORT)), context.getParameter(ES_SCHEME)))
                     .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
                     .setSocketTimeout((int) timeoutMs))
                     .setFailureListener(new RestClient.FailureListener() {
@@ -77,13 +78,13 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     .setMaxRetryTimeoutMillis(60000)
                     .build();
 
-            this.sender = new ElasticSearchMetricSender(this.client, context.getParameter(ES_INDEX).toLowerCase() ,context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD));
+            this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase() ,context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD));
             this.sender.createIndex();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
             
             String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
-            if(filterArray.length >= 1 && filterArray[0].trim() != "") {
+            if(filterArray.length >= 1 && !filterArray[0].trim().equals("")) {
                 for (String filter : filterArray) {
                     this.filters.add(filter.toLowerCase().trim());
                 }
@@ -98,7 +99,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
         for(SampleResult sr : results) {
-            ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE), context.getParameter(ES_TIMESTAMP), this.buildNumber, context.getBooleanParameter(ES_PARSE_HEADERS, false));
+            ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE), context.getParameter(ES_TIMESTAMP), this.buildNumber, context.getBooleanParameter(ES_PARSE_REQ_HEADERS, false), context.getBooleanParameter(ES_PARSE_RES_HEADERS, false));
 
             if(validateSample(context, sr)) {
                 try {
