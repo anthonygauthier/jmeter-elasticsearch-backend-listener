@@ -3,16 +3,23 @@ package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.apache.http.util.EntityUtils;
+import org.apache.jmeter.threads.JMeterContextService;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 import java.util.*;
+
+import static io.github.delirius325.jmeter.backendlistener.elasticsearch.ElasticSearchRequests.SEND_BULK_REQUEST;
 
 public class ElasticSearchMetricSender {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetricSender.class);
@@ -59,7 +66,7 @@ public class ElasticSearchMetricSender {
      */
     public void createIndex() {
         try {
-            this.client.performRequest("PUT", "/"+ this.esIndex);
+            this.client.performRequest(new Request("PUT", "/" + this.esIndex));
         } catch (Exception e) {
             logger.info("Index already exists!");
         }
@@ -72,7 +79,7 @@ public class ElasticSearchMetricSender {
     public void sendRequest() {
         Request request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
         StringBuilder bulkRequestBody = new StringBuilder();
-        String actionMetaData = String.format("{ \"index\" : { \"_index\" : \"%s\", \"_type\" : \"%s\" } }%n", this.esIndex, "SampleResult");
+        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
 
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);

@@ -87,6 +87,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             if(filterArray.length >= 1 && !filterArray[0].trim().equals("")) {
                 for (String filter : filterArray) {
                     this.filters.add(filter.toLowerCase().trim());
+                    logger.info("Added filter: " + filter.toLowerCase().trim());
                 }
             }
 
@@ -157,7 +158,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
         if(this.filters.size() == 0 || this.filters.contains(sampleLabel)) {
-            validSample = (context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful()) ? false : true;
+            validSample = !(context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful());
         }
 
         return validSample;
