@@ -154,13 +154,18 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
      * @return true or false depending on whether or not the sample is valid
      */
     private boolean validateSample(BackendListenerContext context, SampleResult sr) {
-        boolean validSample = false;
+        boolean valid = true;
         String sampleLabel = sr.getSampleLabel().toLowerCase().trim();
 
-        if(this.filters.size() == 0 || this.filters.contains(sampleLabel)) {
-            validSample = !(context.getParameter(ES_TEST_MODE).trim().equals("error") && sr.isSuccessful());
+        if(this.filters.size() > 0) {
+            for(String filter : filters) {
+                // if sample label doesn't contain the filter AND sample is successful + test mode != error then the sample isn't valid
+                if(!sampleLabel.contains(filter) && (sr.isSuccessful() && !context.getParameter(ES_TEST_MODE).trim().equalsIgnoreCase("error"))) {
+                    valid = false;
+                }
+            }
         }
 
-        return validSample;
+        return valid;
     }
 }
