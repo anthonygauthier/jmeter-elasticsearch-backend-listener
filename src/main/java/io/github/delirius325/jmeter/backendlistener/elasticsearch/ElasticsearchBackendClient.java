@@ -84,7 +84,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             checkTestMode(context.getParameter(ES_TEST_MODE));
             
             String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
-            if(filterArray.length >= 1 && !filterArray[0].trim().equals("")) {
+            if(filterArray.length > 0 && !filterArray[0].trim().equals("")) {
                 for (String filter : filterArray) {
                     this.filters.add(filter.toLowerCase().trim());
                     logger.info("Added filter: " + filter.toLowerCase().trim());
@@ -159,11 +159,18 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
         if(this.filters.size() > 0) {
             for(String filter : filters) {
-                // if sample label doesn't contain the filter AND sample is successful + test mode != error then the sample isn't valid
-                if(!sampleLabel.contains(filter) && (sr.isSuccessful() && !context.getParameter(ES_TEST_MODE).trim().equalsIgnoreCase("error"))) {
+                if(sampleLabel.contains(filter)) {
+                    valid = true;
+                    break;
+                } else {
                     valid = false;
                 }
             }
+        }
+
+        // if sample is successful but test mode is "error" only
+        if (sr.isSuccessful() && context.getParameter(ES_TEST_MODE).trim().equalsIgnoreCase("error") && valid) {
+            valid = false;
         }
 
         return valid;
