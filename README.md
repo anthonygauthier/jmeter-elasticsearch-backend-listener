@@ -38,7 +38,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
 
-### Package and testing your newly added code
+### Packaging and testing your newly added code
 Execute below mvn command. Make sure JAVA_HOME is set properly
 ```
 mvn package
