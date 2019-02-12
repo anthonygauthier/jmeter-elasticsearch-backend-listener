@@ -19,6 +19,8 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import org.apache.http.HttpRequestInterceptor;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String BUILD_NUMBER        = "BuildNumber";
@@ -180,7 +182,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
         if(this.filters.size() > 0) {
             for(String filter : filters) {
-                if(sampleLabel.contains(filter)) {
+                Pattern pattern = Pattern.compile(filter);
+                Matcher matcher = pattern.matcher(sampleLabel);
+
+                if(sampleLabel.contains(filter) || matcher.find()) {
                     valid = true;
                     break;
                 } else {
