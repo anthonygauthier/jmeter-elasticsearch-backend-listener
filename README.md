@@ -5,8 +5,8 @@
 ### Description
 JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results to an ElasticSearch engine. It is meant as an alternative live-monitoring tool to the built-in "InfluxDB" backend listener of JMeter. 
 
-### Build Custom code
-Clone the repository and execute below mvn command. Make sure JAVA_HOME is set properly
+### Contributing and testing your code
+Fork & clone the repository, modify/add code and execute below mvn command. Make sure JAVA_HOME is set properly
 ```
 mvn package
 ```
