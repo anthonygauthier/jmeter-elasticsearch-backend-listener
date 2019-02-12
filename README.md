@@ -5,6 +5,12 @@
 ### Description
 JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send test results to an ElasticSearch engine. It is meant as an alternative live-monitoring tool to the built-in "InfluxDB" backend listener of JMeter. 
 
+### Build Custom code
+Clone the repository and execute below mvn command. Make sure JAVA_HOME is set properly
+```
+mvn package
+```
+
 ### Features
 
 * ElasticSearch low-level REST client
@@ -24,12 +30,14 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
   * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change de data source!
 * Continuous Integration support - [Build comparison!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Continuous-Integration---Build-Comparison)
 * Send JMeter variables to ElasticSearch! [Refer to this for more info!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Sending-JMeter-variables) 
+* New AWS ES parameters introducted in 2.6.0 version which leverage Role based authentication to access Elastic Search managed hosting on AWS
+
 ### Maven
 ```xml
 <dependency>
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.5.4</version>
+  <version>2.6.0</version>
 </dependency>
 ```
 

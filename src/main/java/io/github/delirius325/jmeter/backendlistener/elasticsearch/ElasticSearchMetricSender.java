@@ -29,13 +29,15 @@ public class ElasticSearchMetricSender {
     private List<String> metricList;
     private String authUser;
     private String authPwd;
+    private String awsendpoint;
 
-    public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd) {
+    public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd, String endpoint) {
         this.client = cli;
         this.esIndex = index;
         this.metricList = new LinkedList<String>();
         this.authUser = user.trim();
         this.authPwd = pwd.trim();
+        this.awsendpoint = endpoint;
     }
 
     /**
@@ -89,22 +91,24 @@ public class ElasticSearchMetricSender {
 
         request.setEntity(new NStringEntity(bulkRequestBody.toString(), ContentType.APPLICATION_JSON));
 
-        try {
-            if(!this.authUser.equals("") && !this.authPwd.equals("")) {
-                String encodedCredentials = Base64.getEncoder().encodeToString((this.authUser + ":" + this.authPwd).getBytes());
-                RequestOptions.Builder options = request.getOptions().toBuilder();
-                options.addHeader("Authorization", "Basic " + encodedCredentials);
-                request.setOptions(options);
-            }
+       try {
 
-            Response response = this.client.performRequest(request);
+           if(this.awsendpoint.equals("") && !this.authPwd.equals("") ) {
+               String encodedCredentials = Base64.getEncoder().encodeToString((this.authUser + ":" + this.authPwd).getBytes());
+               RequestOptions.Builder options = request.getOptions().toBuilder();
+               options.addHeader("Authorization", "Basic " + encodedCredentials);
+               request.setOptions(options);
+           }
+
+           Response response = this.client.performRequest(request);
 
             if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
                 logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
-            }
+           }
         } catch (Exception e) {
-            if(logger.isErrorEnabled()) {
-                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Request reached timeout.");
+           if(logger.isErrorEnabled()) {
+                logger.error("Exception" + e);
+             logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Request reached timeout.");
             }
         }
     }

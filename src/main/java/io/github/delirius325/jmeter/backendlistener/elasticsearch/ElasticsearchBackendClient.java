@@ -1,5 +1,6 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
+
 import com.google.gson.Gson;
 import org.apache.http.HttpHost;
 import org.apache.jmeter.config.Arguments;
@@ -11,6 +12,11 @@ import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWS4Signer;
+import com.amazonaws.http.AWSRequestSigningApacheInterceptor;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import org.apache.http.HttpRequestInterceptor;
 
 import java.util.*;
 
@@ -29,8 +35,13 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_AUTH_PWD         = "es.xpack.password";
     private static final String ES_PARSE_REQ_HEADERS    = "es.parse.all.req.headers";
     private static final String ES_PARSE_RES_HEADERS    = "es.parse.all.res.headers";
+    private static final String ES_AWS_ENDPOINT = "es.aws.endpoint";
+    private static final String ES_AWS_REGION = "es.aws.region";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
+    private static final String SERVICE_NAME = "es";
+    private static RestClient client;
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
+    private static final AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
 
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
@@ -55,6 +66,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_AUTH_PWD, "");
         parameters.addArgument(ES_PARSE_REQ_HEADERS, "false");
         parameters.addArgument(ES_PARSE_RES_HEADERS, "false");
+        parameters.addArgument(ES_AWS_ENDPOINT,  "");
+        parameters.addArgument(ES_AWS_REGION, "");
         return parameters;
     }
 
@@ -66,19 +79,28 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals("")) ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
-            RestClient client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), Integer.parseInt(context.getParameter(ES_PORT)), context.getParameter(ES_SCHEME)))
-                    .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
-                    .setSocketTimeout((int) timeoutMs))
-                    .setFailureListener(new RestClient.FailureListener() {
-                        @Override
-                        public void onFailure(Node node) {
-                            throw new IllegalStateException();
-                        }
-                    })
-                    .setMaxRetryTimeoutMillis(60000)
-                    .build();
 
-            this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase() ,context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD));
+            if (context.getParameter(ES_AWS_ENDPOINT).equalsIgnoreCase("")) {
+                client = RestClient.builder(new HttpHost(context.getParameter(ES_HOST), Integer.parseInt(context.getParameter(ES_PORT)), context.getParameter(ES_SCHEME)))
+                        .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
+                                .setSocketTimeout((int) timeoutMs))
+                        .setFailureListener(new RestClient.FailureListener() {
+                            @Override
+                            public void onFailure(Node node) {
+                                throw new IllegalStateException();
+                            }
+                        })
+                        .setMaxRetryTimeoutMillis(60000)
+                        .build();
+            } else {
+
+                AWS4Signer signer = new AWS4Signer();
+                signer.setServiceName(SERVICE_NAME);
+                signer.setRegionName(context.getParameter(ES_AWS_REGION));
+                HttpRequestInterceptor interceptor = new AWSRequestSigningApacheInterceptor(SERVICE_NAME, signer, credentialsProvider);
+                client = RestClient.builder(HttpHost.create(context.getParameter(ES_AWS_ENDPOINT))).setHttpClientConfigCallback(hacb -> hacb.addInterceptorLast(interceptor)).build();
+            }
+            this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase(),context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD), context.getParameter(ES_AWS_ENDPOINT));
             this.sender.createIndex();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
@@ -90,7 +112,6 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     logger.info("Added filter: " + filter.toLowerCase().trim());
                 }
             }
-
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
