@@ -129,7 +129,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                 try {
                     this.sender.addToList(new Gson().toJson(metric.getMetric(context)));
                 } catch (Exception e) {
-                    logger.error("The ElasticSearch Backend Listener was unable to a sampler to the list of samplers to send... More info in JMeter's console.");
+                    logger.error("The ElasticSearch Backend Listener was unable to add sampler to the list of samplers to send... More info in JMeter's console.");
                     e.printStackTrace();
                 }
             }
