@@ -36,6 +36,9 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 </dependency>
 ```
 
+### Supporting the author
+[![patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=17797269)
+
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
 
@@ -52,10 +55,6 @@ Move the resulting JAR to your `JMETER_HOME/lib/ext`.
 
 ### Sample Grafana dashboard
 ![screnshot1](https://image.ibb.co/jW6LNx/Screen_Shot_2018_03_21_at_10_21_18_AM.png "Sample Grafana Dashboard")
-
-### Supporting the author
-
-[![patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=17797269)
 
 ### For more info
 For more information, here's a little [documentation](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki).
