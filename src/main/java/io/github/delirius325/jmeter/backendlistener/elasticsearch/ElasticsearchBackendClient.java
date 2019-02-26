@@ -133,7 +133,6 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     e.printStackTrace();
                 }
             }
-
         }
 
         if(this.sender.getListSize() >= this.bulkSize) {
