@@ -199,7 +199,7 @@ public class ElasticSearchMetric {
                 String[] header = lines[i].split(":");
 
                 // if not all req headers and header contains special X-tag
-                if(header.length > 0) {
+                if(header.length > 1) {
                     if(!this.allReqHeaders && header[0].startsWith("X-es-backend")) {
                         this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
                     } else {
