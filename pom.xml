@@ -24,7 +24,7 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/delirius325/jmeter-elasticsearch-backend-listener.git</url>
+		<url>https://github.com/siggitrain/jmeter-elasticsearch-backend-listener.git</url>
 	</scm>
 
 	<developers>
@@ -34,6 +34,12 @@
 			<email>antho325@hotmail.com</email>
 			<url>http://www.github.com/delirius325</url>
 			<timezone>America/New_York</timezone>
+		</developer>
+		<developer>
+			<id>siggitrain</id>
+			<name>Christian Weber</name>
+			<url>http://www.github.com/siggitrain</url>
+			<timezone>MESZ</timezone>
 		</developer>
 	</developers>
 

@@ -1,6 +1,10 @@
 # Compiled class file
 *.class
 
+# Eclipse
+lib/
+.project
+
 # Log file
 *.log
 
