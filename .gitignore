@@ -7,6 +7,7 @@ lib/
 
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -44,3 +45,4 @@ buildNumber.properties
 **.idea
 *.iml
 *.sh
+/bin/
