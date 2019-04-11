@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.jmeter.config.Arguments;
@@ -58,6 +59,14 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private static final String ES_AWS_REGION = "es.aws.region";
 
+    private static final String SSL_TRUSTSTORE_PATH = "ssl.truststore.path";
+
+    private static final String SSL_TRUSTSTORE_PW = "ssl.truststore.pw";
+
+    private static final String SSL_KEYSTORE_PATH = "ssl.keystore.path";
+
+    private static final String SSL_KEYSTORE_PW = "ssl.keystore.pw";
+
     private static final long DEFAULT_TIMEOUT_MS = 200L;
 
     private static final String SERVICE_NAME = "es";
@@ -98,6 +107,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_PARSE_RES_HEADERS, "false");
         parameters.addArgument(ES_AWS_ENDPOINT, "");
         parameters.addArgument(ES_AWS_REGION, "");
+        parameters.addArgument(SSL_TRUSTSTORE_PATH, "");
+        parameters.addArgument(SSL_TRUSTSTORE_PW, "");
+        parameters.addArgument(SSL_KEYSTORE_PATH, "");
+        parameters.addArgument(SSL_KEYSTORE_PW, "");
         return parameters;
     }
 
@@ -112,6 +125,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals(""))
                             ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
 
+            setSSLConfiguration(context);
+
             if (context.getParameter(ES_AWS_ENDPOINT).equalsIgnoreCase("")) {
                 client = RestClient
                         .builder(new HttpHost(context.getParameter(ES_HOST),
@@ -121,7 +136,6 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                         .setFailureListener(new RestClient.FailureListener() {
                             @Override
                             public void onFailure(Node node) {
-                                System.err.println("Error with node: " + node.toString());
                                 logger.error("Error with node: " + node.toString());
                             }
                         }).setMaxRetryTimeoutMillis(60000).build();
@@ -155,6 +169,24 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
         }
+    }
+
+    /**
+     * This methods sets the system properties for SSL to the provided parameters
+     */
+    private void setSSLConfiguration(BackendListenerContext context) {
+        System.setProperty("javax.net.ssl.keyStore", context.getParameter(SSL_KEYSTORE_PATH));
+        System.setProperty("javax.net.ssl.keyStorePassword", context.getParameter(SSL_KEYSTORE_PW));
+        System.setProperty("javax.net.ssl.keyStoreType",
+                FilenameUtils.getExtension(context.getParameter(SSL_KEYSTORE_PATH)).equals("jks") ? "jks" : "pkcs12");
+        //jks (.jks) or pkcs12 (.p12) 
+
+        System.setProperty("javax.net.ssl.trustStore", context.getParameter(SSL_TRUSTSTORE_PATH));
+        System.setProperty("javax.net.ssl.trustStorePassword", context.getParameter(SSL_TRUSTSTORE_PW));
+        System.setProperty("javax.net.ssl.trustStoreType",
+                FilenameUtils.getExtension(context.getParameter(SSL_TRUSTSTORE_PATH)).equals("jks") ? "jks"
+                        : "pkcs12");
+
     }
 
     @Override

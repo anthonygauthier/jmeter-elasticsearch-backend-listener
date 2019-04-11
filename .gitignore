@@ -5,6 +5,8 @@
 lib/
 .project
 certs/
+*.jks
+*.p12
 
 # Log file
 *.log
