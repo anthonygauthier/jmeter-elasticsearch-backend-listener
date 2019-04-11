@@ -4,6 +4,7 @@
 # Eclipse
 lib/
 .project
+certs/
 
 # Log file
 *.log
