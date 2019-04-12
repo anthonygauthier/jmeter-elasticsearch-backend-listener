@@ -101,12 +101,11 @@ public class ElasticSearchMetricSender {
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
                 logger.error("ElasticSearch Backend Listener failed to create index {}", this.esIndex);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.info("ElasticSearch Backend Listener failed to create index {}", this.esIndex);
             if (logger.isErrorEnabled()) {
                 logger.error("Exception" + e);
             }
-            throw e;
         }
     }
 
