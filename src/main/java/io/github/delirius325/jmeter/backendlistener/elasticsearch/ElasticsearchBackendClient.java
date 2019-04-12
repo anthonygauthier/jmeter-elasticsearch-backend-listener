@@ -37,6 +37,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private static final String ES_INDEX = "es.index";
 
+    private static final String ES_FIELDS = "es.fields";
+
     private static final String ES_TIMESTAMP = "es.timestamp";
 
     private static final String ES_BULK_SIZE = "es.bulk.size";
@@ -83,6 +85,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private Set<String> filters;
 
+    private Set<String> fields;
+
     private int buildNumber;
 
     private int bulkSize;
@@ -96,6 +100,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         parameters.addArgument(ES_HOST, null);
         parameters.addArgument(ES_PORT, "9200");
         parameters.addArgument(ES_INDEX, null);
+        parameters.addArgument(ES_FIELDS, "");
         parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
         parameters.addArgument(ES_BULK_SIZE, "100");
         parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
@@ -118,6 +123,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
             this.filters = new HashSet<>();
+            this.fields = new HashSet<>();
             this.modes = new HashSet<>(Arrays.asList("info", "debug", "error", "quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
@@ -149,6 +155,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                 client = RestClient.builder(HttpHost.create(context.getParameter(ES_AWS_ENDPOINT)))
                         .setHttpClientConfigCallback(hacb -> hacb.addInterceptorLast(interceptor)).build();
             }
+
+            convertParameterToSet(context, ES_SAMPLE_FILTER, this.filters);
+            convertParameterToSet(context, ES_FIELDS, this.fields);
+
             this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase(),
                     context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD),
                     context.getParameter(ES_AWS_ENDPOINT));
@@ -156,18 +166,24 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
 
-            String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";"))
-                    ? context.getParameter(ES_SAMPLE_FILTER).split(";")
-                    : new String[] { context.getParameter(ES_SAMPLE_FILTER) };
-            if (filterArray.length > 0 && !filterArray[0].trim().equals("")) {
-                for (String filter : filterArray) {
-                    this.filters.add(filter.toLowerCase().trim());
-                    logger.info("Added filter: " + filter.toLowerCase().trim());
-                }
-            }
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
+        }
+    }
+
+    /**
+     * This method converts a semicolon sepearted list contained in a parameter into s string set
+     * 
+     */
+    private void convertParameterToSet(BackendListenerContext context, String parameter, Set<String> set) {
+        String[] array = (context.getParameter(parameter).contains(";")) ? context.getParameter(parameter).split(";")
+                : new String[] { context.getParameter(parameter) };
+        if (array.length > 0 && !array[0].trim().equals("")) {
+            for (String entry : array) {
+                set.add(entry.toLowerCase().trim());
+                logger.info("Parsed from " + parameter + ": " + entry.toLowerCase().trim());
+            }
         }
     }
 
@@ -195,7 +211,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE),
                     context.getParameter(ES_TIMESTAMP), this.buildNumber,
                     context.getBooleanParameter(ES_PARSE_REQ_HEADERS, false),
-                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false));
+                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false), fields);
 
             if (validateSample(context, sr)) {
                 try {

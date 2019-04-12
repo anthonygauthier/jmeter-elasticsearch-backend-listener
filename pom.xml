@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>main.java.io.github.delirius325</groupId>
@@ -24,7 +26,7 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/siggitrain/jmeter-elasticsearch-backend-listener.git</url>
+		<url>https://github.com/delirius325/jmeter-elasticsearch-backend-listener.git</url>
 	</scm>
 
 	<developers>
@@ -100,7 +102,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-client</artifactId>
+			<artifactId>elasticsearch-rest-client</artifactId>
 			<version>${org.elasticsearch.client}</version>
 		</dependency>
 		<dependency>
@@ -167,10 +169,10 @@
 		<profile>
 			<id>release-sign-artifacts</id>
 			<activation>
-		    		<property>
+				<property>
 					<name>performRelease</name>
 					<value>true</value>
-			    	</property>
+				</property>
 			</activation>
 			<build>
 				<plugins>
@@ -290,15 +292,15 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-                            <artifactSet>
-                                <excludes>
-                                    <exclude>org.apache.jmeter:*</exclude>
-                                    <exclude>commons-codec:*</exclude>
-                                    <exclude>commons-logging:*</exclude>
-                                    <exclude>org.apache.httpcomponents:*</exclude>
-                                    <exclude>net.java.dev.jna:*</exclude>
-                                </excludes>
-                            </artifactSet>
+							<artifactSet>
+								<excludes>
+									<exclude>org.apache.jmeter:*</exclude>
+									<exclude>commons-codec:*</exclude>
+									<exclude>commons-logging:*</exclude>
+									<exclude>org.apache.httpcomponents:*</exclude>
+									<exclude>net.java.dev.jna:*</exclude>
+								</excludes>
+							</artifactSet>
 						</configuration>
 					</execution>
 				</executions>

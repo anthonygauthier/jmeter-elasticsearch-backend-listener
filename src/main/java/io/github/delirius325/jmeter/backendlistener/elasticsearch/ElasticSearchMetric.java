@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.samplers.SampleResult;
@@ -32,12 +33,14 @@ public class ElasticSearchMetric {
 
     private HashMap<String, Object> json;
 
+    private Set<String> fields;
+
     private boolean allReqHeaders;
 
     private boolean allResHeaders;
 
     public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber,
-            boolean parseReqHeaders, boolean parseResHeaders) {
+            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
@@ -45,6 +48,7 @@ public class ElasticSearchMetric {
         this.json = new HashMap<>();
         this.allReqHeaders = parseReqHeaders;
         this.allResHeaders = parseResHeaders;
+        this.fields = fields;
     }
 
     /**
@@ -58,27 +62,27 @@ public class ElasticSearchMetric {
         SimpleDateFormat sdf = new SimpleDateFormat(this.esTimestamp);
 
         //add all the default SampleResult parameters
-        this.json.put("AllThreads", this.sampleResult.getAllThreads());
-        this.json.put("BodySize", this.sampleResult.getBodySizeAsLong());
-        this.json.put("Bytes", this.sampleResult.getBytesAsLong());
-        this.json.put("SentBytes", this.sampleResult.getSentBytes());
-        this.json.put("ConnectTime", this.sampleResult.getConnectTime());
-        this.json.put("ContentType", this.sampleResult.getContentType());
-        this.json.put("DataType", this.sampleResult.getDataType());
-        this.json.put("ErrorCount", this.sampleResult.getErrorCount());
-        this.json.put("GrpThreads", this.sampleResult.getGroupThreads());
-        this.json.put("IdleTime", this.sampleResult.getIdleTime());
-        this.json.put("Latency", this.sampleResult.getLatency());
-        this.json.put("ResponseTime", this.sampleResult.getTime());
-        this.json.put("SampleCount", this.sampleResult.getSampleCount());
-        this.json.put("SampleLabel", this.sampleResult.getSampleLabel());
-        this.json.put("ThreadName", this.sampleResult.getThreadName());
-        this.json.put("URL", this.sampleResult.getURL());
-        this.json.put("ResponseCode", this.sampleResult.getResponseCode());
-        this.json.put("StartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
-        this.json.put("EndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
-        this.json.put("Timestamp", sdf.format(new Date(this.sampleResult.getTimeStamp())));
-        this.json.put("InjectorHostname", InetAddress.getLocalHost().getHostName());
+        addFilteredJSON("AllThreads", this.sampleResult.getAllThreads());
+        addFilteredJSON("BodySize", this.sampleResult.getBodySizeAsLong());
+        addFilteredJSON("Bytes", this.sampleResult.getBytesAsLong());
+        addFilteredJSON("SentBytes", this.sampleResult.getSentBytes());
+        addFilteredJSON("ConnectTime", this.sampleResult.getConnectTime());
+        addFilteredJSON("ContentType", this.sampleResult.getContentType());
+        addFilteredJSON("DataType", this.sampleResult.getDataType());
+        addFilteredJSON("ErrorCount", this.sampleResult.getErrorCount());
+        addFilteredJSON("GrpThreads", this.sampleResult.getGroupThreads());
+        addFilteredJSON("IdleTime", this.sampleResult.getIdleTime());
+        addFilteredJSON("Latency", this.sampleResult.getLatency());
+        addFilteredJSON("ResponseTime", this.sampleResult.getTime());
+        addFilteredJSON("SampleCount", this.sampleResult.getSampleCount());
+        addFilteredJSON("SampleLabel", this.sampleResult.getSampleLabel());
+        addFilteredJSON("ThreadName", this.sampleResult.getThreadName());
+        addFilteredJSON("URL", this.sampleResult.getURL());
+        addFilteredJSON("ResponseCode", this.sampleResult.getResponseCode());
+        addFilteredJSON("StartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
+        addFilteredJSON("EndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
+        addFilteredJSON("Timestamp", sdf.format(new Date(this.sampleResult.getTimeStamp())));
+        addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
 
         // Add the details according to the mode that is set
         switch (this.esTestMode) {
@@ -113,16 +117,22 @@ public class ElasticSearchMetric {
         if (assertionResults != null) {
             Map<String, Object>[] assertionArray = new HashMap[assertionResults.length];
             Integer i = 0;
+            String failureMessage = "";
+            boolean isFailure = false;
             for (AssertionResult assertionResult : assertionResults) {
                 HashMap<String, Object> assertionMap = new HashMap<>();
                 boolean failure = assertionResult.isFailure() || assertionResult.isError();
+                isFailure = isFailure || assertionResult.isFailure() || assertionResult.isError();
                 assertionMap.put("failure", failure);
                 assertionMap.put("failureMessage", assertionResult.getFailureMessage());
+                failureMessage += assertionResult.getFailureMessage() + "\n";
                 assertionMap.put("name", assertionResult.getName());
                 assertionArray[i] = assertionMap;
                 i++;
             }
-            this.json.put("AssertionResults", assertionArray);
+            addFilteredJSON("AssertionResults", assertionArray);
+            addFilteredJSON("FailureMessage", failureMessage);
+            addFilteredJSON("Success", !isFailure);
         }
     }
 
@@ -139,15 +149,15 @@ public class ElasticSearchMetric {
 
         if (this.ciBuildNumber != 0) {
             elapsedTime = getElapsedTime(true);
-            this.json.put("BuildNumber", this.ciBuildNumber);
+            addFilteredJSON("BuildNumber", this.ciBuildNumber);
 
             if (elapsedTime != null)
-                this.json.put("ElapsedTimeComparison", sdf.format(elapsedTime));
+                addFilteredJSON("ElapsedTimeComparison", sdf.format(elapsedTime));
         }
 
         elapsedTime = getElapsedTime(false);
         if (elapsedTime != null)
-            this.json.put("ElapsedTime", sdf.format(elapsedTime));
+            addFilteredJSON("ElapsedTime", sdf.format(elapsedTime));
     }
 
     /**
@@ -165,11 +175,11 @@ public class ElasticSearchMetric {
                 String parameter = context.getParameter(parameterName).trim();
 
                 try {
-                    this.json.put(parameterName, Long.parseLong(parameter));
+                    addFilteredJSON(parameterName, Long.parseLong(parameter));
                 } catch (Exception e) {
                     if (logger.isDebugEnabled())
                         logger.debug("Cannot convert custom field to number");
-                    this.json.put(parameterName, context.getParameter(parameterName).trim());
+                    addFilteredJSON(parameterName, context.getParameter(parameterName).trim());
                 }
             }
         }
@@ -180,11 +190,11 @@ public class ElasticSearchMetric {
      *
      */
     private void addDetails() {
-        this.json.put("RequestHeaders", this.sampleResult.getRequestHeaders());
-        this.json.put("RequestBody", this.sampleResult.getSamplerData());
-        this.json.put("ResponseHeaders", this.sampleResult.getResponseHeaders());
-        this.json.put("ResponseBody", this.sampleResult.getResponseDataAsString());
-        this.json.put("ResponseMessage", this.sampleResult.getResponseMessage());
+        addFilteredJSON("RequestHeaders", this.sampleResult.getRequestHeaders());
+        addFilteredJSON("RequestBody", this.sampleResult.getSamplerData());
+        addFilteredJSON("ResponseHeaders", this.sampleResult.getResponseHeaders());
+        addFilteredJSON("ResponseBody", this.sampleResult.getResponseDataAsString());
+        addFilteredJSON("ResponseMessage", this.sampleResult.getResponseMessage());
     }
 
     /**
@@ -225,6 +235,18 @@ public class ElasticSearchMetric {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Adds a given key-value pair to JSON if the key is contained in the field filter or in case of empty field filter
+     * 
+     * @param key
+     * @param value
+     */
+    private void addFilteredJSON(String key, Object value) {
+        if (this.fields.size() == 0 || this.fields.contains(key.toLowerCase())) {
+            this.json.put(key, value);
         }
     }
 
