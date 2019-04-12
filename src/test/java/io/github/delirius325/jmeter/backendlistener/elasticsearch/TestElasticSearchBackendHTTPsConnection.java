@@ -23,7 +23,7 @@ public class TestElasticSearchBackendHTTPsConnection {
 
         String SSL_TRUSTSTORE_PATH = "certs/truststore.jks";
         String SSL_TRUSTSTORE_PW = "changeit";
-        String SSL_KEYSTORE_PATH = "certs/logstash-keystore.jks";
+        String SSL_KEYSTORE_PATH = "certs/jmeter-keystore.jks";
         String SSL_KEYSTORE_PW = "changeit";
 
         System.setProperty("javax.net.ssl.keyStore", SSL_KEYSTORE_PATH);
