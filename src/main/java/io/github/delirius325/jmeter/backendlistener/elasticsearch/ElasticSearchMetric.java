@@ -161,7 +161,7 @@ public class ElasticSearchMetric {
         while (pluginParameters.hasNext()) {
             String parameterName = pluginParameters.next();
 
-            if (!parameterName.contains("es.") && !context.getParameter(parameterName).trim().equals("")) {
+            if (!parameterName.startsWith("es.") && !context.getParameter(parameterName).trim().equals("")) {
                 String parameter = context.getParameter(parameterName).trim();
 
                 try {

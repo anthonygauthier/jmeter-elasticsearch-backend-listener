@@ -59,13 +59,13 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private static final String ES_AWS_REGION = "es.aws.region";
 
-    private static final String SSL_TRUSTSTORE_PATH = "ssl.truststore.path";
+    private static final String SSL_TRUSTSTORE_PATH = "es.ssl.truststore.path";
 
-    private static final String SSL_TRUSTSTORE_PW = "ssl.truststore.pw";
+    private static final String SSL_TRUSTSTORE_PW = "es.ssl.truststore.pw";
 
-    private static final String SSL_KEYSTORE_PATH = "ssl.keystore.path";
+    private static final String SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
 
-    private static final String SSL_KEYSTORE_PW = "ssl.keystore.pw";
+    private static final String SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
 
     private static final long DEFAULT_TIMEOUT_MS = 200L;
 
