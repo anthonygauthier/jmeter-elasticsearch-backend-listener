@@ -9,8 +9,10 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore("Running SSL protected elasticsearch needed")
 public class TestElasticSearchBackendHTTPsConnection {
     private static RestClient client;
 
