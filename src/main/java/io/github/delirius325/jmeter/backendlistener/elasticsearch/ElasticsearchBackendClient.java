@@ -76,6 +76,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     @Override
     public void setupTest(BackendListenerContext context) throws Exception {
         try {
+            getDefaultParameters();
             this.filters = new HashSet<>();
             this.modes = new HashSet<>(Arrays.asList("info","debug","error","quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
