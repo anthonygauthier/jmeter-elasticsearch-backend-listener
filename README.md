@@ -33,11 +33,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
   <version>2.6.2</version>
-</dependency>
 ```
-
-### Supporting the author
-[![patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=17797269)
 
 ## Contributing
 Feel free to contribute by branching and making pull requests, or simply by suggesting ideas through the "Issues" tab.
