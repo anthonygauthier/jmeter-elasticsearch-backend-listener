@@ -71,6 +71,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private int bulkSize;
     private long timeoutMs;
 
+    public ElasticsearchBackendClient() {
+        super();
+    }
+
     @Override
     public Arguments getDefaultParameters() {
         Arguments arguments = new Arguments();
