@@ -168,14 +168,6 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.sender.createIndex();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
-
-            String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
-            if(filterArray.length > 0 && !filterArray[0].trim().equals("")) {
-                for (String filter : filterArray) {
-                    this.filters.add(filter.toLowerCase().trim());
-                    logger.info("Added filter: " + filter.toLowerCase().trim());
-                }
-            }
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
