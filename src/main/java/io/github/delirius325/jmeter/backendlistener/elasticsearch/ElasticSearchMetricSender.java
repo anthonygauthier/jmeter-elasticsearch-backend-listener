@@ -79,9 +79,9 @@ public class ElasticSearchMetricSender {
      * All is being sent through the low-level ElasticSearch REST Client.
      */
     public void sendRequest() {
-        Request request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
+        Request request = new Request("POST", "/" + this.esIndex + "/_bulk");
         StringBuilder bulkRequestBody = new StringBuilder();
-        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
+        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
 
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);
