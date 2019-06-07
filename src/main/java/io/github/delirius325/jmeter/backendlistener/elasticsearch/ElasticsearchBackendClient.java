@@ -14,6 +14,7 @@ import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
+import org.apache.jmeter.visualizers.backend.BackendListener;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;
@@ -78,6 +79,24 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
 
     private static final AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
+    private static final Map<String, String> DEFAULT_ARGS = new LinkedHashMap<>();
+    static {
+        DEFAULT_ARGS.put(ES_SCHEME, "http");
+        DEFAULT_ARGS.put(ES_HOST, null);
+        DEFAULT_ARGS.put(ES_PORT, "9200");
+        DEFAULT_ARGS.put(ES_INDEX, null);
+        DEFAULT_ARGS.put(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+        DEFAULT_ARGS.put(ES_BULK_SIZE, "100");
+        DEFAULT_ARGS.put(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
+        DEFAULT_ARGS.put(ES_SAMPLE_FILTER, null);
+        DEFAULT_ARGS.put(ES_TEST_MODE, "info");
+        DEFAULT_ARGS.put(ES_AUTH_USER, "");
+        DEFAULT_ARGS.put(ES_AUTH_PWD, "");
+        DEFAULT_ARGS.put(ES_PARSE_REQ_HEADERS, "false");
+        DEFAULT_ARGS.put(ES_PARSE_RES_HEADERS, "false");
+        DEFAULT_ARGS.put(ES_AWS_ENDPOINT,  "");
+        DEFAULT_ARGS.put(ES_AWS_REGION, "");
+    }
 
     private ElasticSearchMetricSender sender;
 
@@ -93,30 +112,15 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     private long timeoutMs;
 
+    public ElasticsearchBackendClient() {
+        super();
+    }
+
     @Override
     public Arguments getDefaultParameters() {
-        Arguments parameters = new Arguments();
-        parameters.addArgument(ES_SCHEME, "http");
-        parameters.addArgument(ES_HOST, null);
-        parameters.addArgument(ES_PORT, "9200");
-        parameters.addArgument(ES_INDEX, null);
-        parameters.addArgument(ES_FIELDS, "");
-        parameters.addArgument(ES_TIMESTAMP, "yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-        parameters.addArgument(ES_BULK_SIZE, "100");
-        parameters.addArgument(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
-        parameters.addArgument(ES_SAMPLE_FILTER, null);
-        parameters.addArgument(ES_TEST_MODE, "info");
-        parameters.addArgument(ES_AUTH_USER, "");
-        parameters.addArgument(ES_AUTH_PWD, "");
-        parameters.addArgument(ES_PARSE_REQ_HEADERS, "false");
-        parameters.addArgument(ES_PARSE_RES_HEADERS, "false");
-        parameters.addArgument(ES_AWS_ENDPOINT, "");
-        parameters.addArgument(ES_AWS_REGION, "");
-        parameters.addArgument(SSL_TRUSTSTORE_PATH, "");
-        parameters.addArgument(SSL_TRUSTSTORE_PW, "");
-        parameters.addArgument(SSL_KEYSTORE_PATH, "");
-        parameters.addArgument(SSL_KEYSTORE_PW, "");
-        return parameters;
+        Arguments arguments = new Arguments();
+        DEFAULT_ARGS.forEach(arguments::addArgument);
+        return arguments;
     }
 
     @Override
@@ -146,7 +150,6 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                             }
                         }).setMaxRetryTimeoutMillis(60000).build();
             } else {
-
                 AWS4Signer signer = new AWS4Signer();
                 signer.setServiceName(SERVICE_NAME);
                 signer.setRegionName(context.getParameter(ES_AWS_REGION));
@@ -166,6 +169,13 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
 
+            String[] filterArray = (context.getParameter(ES_SAMPLE_FILTER).contains(";")) ? context.getParameter(ES_SAMPLE_FILTER).split(";") : new String[] {context.getParameter(ES_SAMPLE_FILTER)};
+            if(filterArray.length > 0 && !filterArray[0].trim().equals("")) {
+                for (String filter : filterArray) {
+                    this.filters.add(filter.toLowerCase().trim());
+                    logger.info("Added filter: " + filter.toLowerCase().trim());
+                }
+            }
             super.setupTest(context);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to connect to the ElasticSearch engine", e);
