@@ -89,17 +89,10 @@ public class ElasticSearchMetricSender {
      * @throws IOException
      */
     public void createIndex() throws IOException {
-        Response response = null;
         try {
-            response = this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                logger.error("ElasticSearch Backend Listener failed to create index {}", this.esIndex);
-            }
+            this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
         } catch (Exception e) {
-            logger.info("ElasticSearch Backend Listener failed to create index {}", this.esIndex);
-            if (logger.isErrorEnabled()) {
-                logger.error("Exception" + e);
-            }
+            logger.info("Index already exists!");
         }
     }
 

@@ -61,6 +61,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_BULK_SIZE, "100");
         DEFAULT_ARGS.put(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         DEFAULT_ARGS.put(ES_SAMPLE_FILTER, null);
+        DEFAULT_ARGS.put(ES_FIELDS, null);
         DEFAULT_ARGS.put(ES_TEST_MODE, "info");
         DEFAULT_ARGS.put(ES_AUTH_USER, "");
         DEFAULT_ARGS.put(ES_AUTH_PWD, "");

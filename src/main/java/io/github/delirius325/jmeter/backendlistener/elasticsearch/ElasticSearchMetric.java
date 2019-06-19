@@ -71,8 +71,9 @@ public class ElasticSearchMetric {
         addFilteredJSON("ThreadName", this.sampleResult.getThreadName());
         addFilteredJSON("URL", this.sampleResult.getURL());
         addFilteredJSON("ResponseCode", this.sampleResult.getResponseCode());
-        addFilteredJSON("StartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
-        addFilteredJSON("EndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
+        addFilteredJSON("TestStartTime", JMeterContextService.getTestStartTime());
+        addFilteredJSON("SampleStartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
+        addFilteredJSON("SampleEndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
         addFilteredJSON("Timestamp", sdf.format(new Date(this.sampleResult.getTimeStamp())));
         addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
 
