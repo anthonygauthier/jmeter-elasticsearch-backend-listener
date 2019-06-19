@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>main.java.io.github.delirius325</groupId>
 	<artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-	<version>2.6.4-SNAPSHOT</version>
+	<version>2.6.5</version>
 	<packaging>jar</packaging>
 
 	<name>jmeter.backendlistener.elasticsearch</name>

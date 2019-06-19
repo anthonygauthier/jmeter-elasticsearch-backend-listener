@@ -1,9 +1,6 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,55 +26,30 @@ import com.google.gson.Gson;
 
 public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String BUILD_NUMBER = "BuildNumber";
-
     private static final String ES_SCHEME = "es.scheme";
-
     private static final String ES_HOST = "es.host";
-
     private static final String ES_PORT = "es.port";
-
     private static final String ES_INDEX = "es.index";
-
     private static final String ES_FIELDS = "es.fields";
-
     private static final String ES_TIMESTAMP = "es.timestamp";
-
     private static final String ES_BULK_SIZE = "es.bulk.size";
-
     private static final String ES_TIMEOUT_MS = "es.timout.ms";
-
     private static final String ES_SAMPLE_FILTER = "es.sample.filter";
-
     private static final String ES_TEST_MODE = "es.test.mode";
-
     private static final String ES_AUTH_USER = "es.xpack.user";
-
     private static final String ES_AUTH_PWD = "es.xpack.password";
-
     private static final String ES_PARSE_REQ_HEADERS = "es.parse.all.req.headers";
-
     private static final String ES_PARSE_RES_HEADERS = "es.parse.all.res.headers";
-
     private static final String ES_AWS_ENDPOINT = "es.aws.endpoint";
-
     private static final String ES_AWS_REGION = "es.aws.region";
-
-    private static final String SSL_TRUSTSTORE_PATH = "es.ssl.truststore.path";
-
-    private static final String SSL_TRUSTSTORE_PW = "es.ssl.truststore.pw";
-
-    private static final String SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
-
-    private static final String SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
-
+    private static final String ES_SSL_TRUSTSTORE_PATH = "es.ssl.truststore.path";
+    private static final String ES_SSL_TRUSTSTORE_PW = "es.ssl.truststore.pw";
+    private static final String ES_SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
+    private static final String ES_SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
-
     private static final String SERVICE_NAME = "es";
-
     private static RestClient client;
-
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchBackendClient.class);
-
     private static final AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
     private static final Map<String, String> DEFAULT_ARGS = new LinkedHashMap<>();
     static {
@@ -96,20 +68,17 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_PARSE_RES_HEADERS, "false");
         DEFAULT_ARGS.put(ES_AWS_ENDPOINT,  "");
         DEFAULT_ARGS.put(ES_AWS_REGION, "");
+        DEFAULT_ARGS.put(ES_SSL_TRUSTSTORE_PATH, "");
+        DEFAULT_ARGS.put(ES_SSL_TRUSTSTORE_PW, "");
+        DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PATH, "");
+        DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PW, "");
     }
-
     private ElasticSearchMetricSender sender;
-
     private Set<String> modes;
-
     private Set<String> filters;
-
     private Set<String> fields;
-
     private int buildNumber;
-
     private int bulkSize;
-
     private long timeoutMs;
 
     public ElasticsearchBackendClient() {
@@ -175,8 +144,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     }
 
     /**
-     * This method converts a semicolon sepearted list contained in a parameter into s string set
-     * 
+     * Method that converts a semicolon separated list contained in a parameter into a string set
+     * @param context
+     * @param parameter
+     * @param set
      */
     private void convertParameterToSet(BackendListenerContext context, String parameter, Set<String> set) {
         String[] array = (context.getParameter(parameter).contains(";")) ? context.getParameter(parameter).split(";")
@@ -184,25 +155,27 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         if (array.length > 0 && !array[0].trim().equals("")) {
             for (String entry : array) {
                 set.add(entry.toLowerCase().trim());
-                logger.info("Parsed from " + parameter + ": " + entry.toLowerCase().trim());
+                if(logger.isDebugEnabled())
+                    logger.debug("Parsed from " + parameter + ": " + entry.toLowerCase().trim());
             }
         }
     }
 
     /**
-     * This methods sets the system properties for SSL to the provided parameters
+     * Method that sets the SSL configuration to be able to send requests to a secured endpoint
+     * @param context
      */
     private void setSSLConfiguration(BackendListenerContext context) {
-        System.setProperty("javax.net.ssl.keyStore", context.getParameter(SSL_KEYSTORE_PATH));
-        System.setProperty("javax.net.ssl.keyStorePassword", context.getParameter(SSL_KEYSTORE_PW));
+        System.setProperty("javax.net.ssl.keyStore", context.getParameter(ES_SSL_KEYSTORE_PATH));
+        System.setProperty("javax.net.ssl.keyStorePassword", context.getParameter(ES_SSL_KEYSTORE_PW));
         System.setProperty("javax.net.ssl.keyStoreType",
-                FilenameUtils.getExtension(context.getParameter(SSL_KEYSTORE_PATH)).equals("jks") ? "jks" : "pkcs12");
+                FilenameUtils.getExtension(context.getParameter(ES_SSL_KEYSTORE_PATH)).equals("jks") ? "jks" : "pkcs12");
         //jks (.jks) or pkcs12 (.p12) 
 
-        System.setProperty("javax.net.ssl.trustStore", context.getParameter(SSL_TRUSTSTORE_PATH));
-        System.setProperty("javax.net.ssl.trustStorePassword", context.getParameter(SSL_TRUSTSTORE_PW));
+        System.setProperty("javax.net.ssl.trustStore", context.getParameter(ES_SSL_TRUSTSTORE_PATH));
+        System.setProperty("javax.net.ssl.trustStorePassword", context.getParameter(ES_SSL_TRUSTSTORE_PW));
         System.setProperty("javax.net.ssl.trustStoreType",
-                FilenameUtils.getExtension(context.getParameter(SSL_TRUSTSTORE_PATH)).equals("jks") ? "jks"
+                FilenameUtils.getExtension(context.getParameter(ES_SSL_TRUSTSTORE_PATH)).equals("jks") ? "jks"
                         : "pkcs12");
 
     }

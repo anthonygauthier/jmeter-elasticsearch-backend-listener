@@ -19,18 +19,12 @@ import org.slf4j.LoggerFactory;
 
 public class ElasticSearchMetricSender {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetricSender.class);
-
     private RestClient client;
-
     private String esIndex;
-
     private List<String> metricList;
-
     private String authUser;
-
     private String authPwd;
-
-    private String awsendpoint;
+    private String awsEndpoint;
 
     public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd, String endpoint) {
         this.client = cli;
@@ -38,7 +32,7 @@ public class ElasticSearchMetricSender {
         this.metricList = new LinkedList<String>();
         this.authUser = user.trim();
         this.authPwd = pwd.trim();
-        this.awsendpoint = endpoint;
+        this.awsEndpoint = endpoint;
     }
 
     /**
@@ -77,8 +71,8 @@ public class ElasticSearchMetricSender {
     /**
      * This method sets the Basic Authorization header to requests
      */
-    private Request setAuthoizationHeader(Request request) {
-        if (this.awsendpoint.equals("") && !this.authPwd.equals("")) {
+    private Request setAuthorizationHeader(Request request) {
+        if (this.awsEndpoint.equals("") && !this.authPwd.equals("")) {
             String encodedCredentials = Base64.getEncoder()
                     .encodeToString((this.authUser + ":" + this.authPwd).getBytes());
             RequestOptions.Builder options = request.getOptions().toBuilder();
@@ -97,7 +91,7 @@ public class ElasticSearchMetricSender {
     public void createIndex() throws IOException {
         Response response = null;
         try {
-            response = this.client.performRequest(setAuthoizationHeader(new Request("PUT", "/" + this.esIndex)));
+            response = this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
                 logger.error("ElasticSearch Backend Listener failed to create index {}", this.esIndex);
             }
@@ -128,7 +122,7 @@ public class ElasticSearchMetricSender {
 
         try {
 
-            Response response = this.client.performRequest(setAuthoizationHeader(request));
+            Response response = this.client.performRequest(setAuthorizationHeader(request));
 
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
                 logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
@@ -136,8 +130,7 @@ public class ElasticSearchMetricSender {
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("Exception" + e);
-                logger.error(
-                        "ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Request reached timeout.");
+                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
             }
         }
     }

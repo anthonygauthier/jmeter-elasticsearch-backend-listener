@@ -22,21 +22,13 @@ import org.slf4j.LoggerFactory;
 
 public class ElasticSearchMetric {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
-
     private SampleResult sampleResult;
-
     private String esTestMode;
-
     private String esTimestamp;
-
     private int ciBuildNumber;
-
     private HashMap<String, Object> json;
-
     private Set<String> fields;
-
     private boolean allReqHeaders;
-
     private boolean allResHeaders;
 
     public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber,
