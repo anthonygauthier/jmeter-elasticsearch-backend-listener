@@ -1,8 +1,16 @@
 # Compiled class file
 *.class
 
+# Eclipse
+lib/
+.project
+certs/
+*.jks
+*.p12
+
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -40,3 +48,4 @@ buildNumber.properties
 **.idea
 *.iml
 *.sh
+/bin/
