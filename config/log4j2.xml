@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      	<PatternLayout pattern="%highlight{%d{dd MMM yyyy HH:mm:ss,SSS} %-5p [%t] - %msg%n%n}{FATAL=bright red, ERROR=bright red, WARN=bright yellow, INFO=bright white, DEBUG=bright blue, TRACE=white}"/>
+    </Console>
+    <File name="File" fileName="logs/${date:yyyyMMdd_HHmmss}.log">
+    	<PatternLayout pattern="%d{dd MMM yyyy HH:mm:ss,SSS} %-5p %marker [%t] %C %M - %msg%n"/>
+    <!--logs/${ctx:testrun:-unknown}_${date:yyyyMMdd_HHmmss}_${ctx:application:-unknown}_${ctx:loadprofile:-Log}.log--></File>
+  </Appenders>
+  <Loggers>
+    <Root level="trace">
+      <AppenderRef ref="File"/>
+	  <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>
