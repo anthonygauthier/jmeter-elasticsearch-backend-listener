@@ -214,9 +214,9 @@ public class ElasticSearchMetric {
             headersArrayList.add(this.sampleResult.getResponseHeaders().split("\n"));
         }
 
-        for (String[] lines : headersArrayList) {
-            for (int i = 0; i < lines.length; i++) {
-                String[] header = lines[i].split(":");
+        for(String[] lines : headersArrayList) {
+            for(int i=0; i < lines.length; i++) {
+                String[] header = lines[i].split(":",2);
 
                 // if not all req headers and header contains special X-tag
                 if (header.length > 1) {
