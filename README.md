@@ -16,6 +16,30 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
   * By making bulk requests, there are practically no impacts on the performance of the tests themselves. 
 * Filters
   * Only send the samples you want by using Filters! Simply type them as follows in the appropriate field : ``filter1;filter2;filter3`` or ``sampleLabel_must_contain_this``.
+* Specific fields ```field1;field2;field3`
+  * Specify fields that you want to send to ElasticSearch (possible fields below)
+     * AllThreads
+     * BodySize
+     * Bytes
+     * SentBytes
+     * ConnectTime
+     * ContentType
+     * DataType
+     * ErrorCount
+     * GrpThreads
+     * IdleTime
+     * Latency
+     * ResponseTime
+     * SampleCount
+     * SampleLabel
+     * ThreadName
+     * URL
+     * ResponseCode
+     * TestStartTime
+     * SampleStartTime
+     * SampleEndTime
+     * Timestamp
+     * InjectorHostname
 * Verbose, semi-verbose, error only, and quiet mode
   * __debug__ : Send request/response information of all samplers (headers, body, etc.)
   * __info__ : Sends all samplers to the ElasticSearch engine, but only sends the headers, body info for the failed samplers.
