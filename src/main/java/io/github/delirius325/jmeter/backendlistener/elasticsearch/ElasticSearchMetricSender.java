@@ -101,9 +101,9 @@ public class ElasticSearchMetricSender {
      * sent through the low-level ElasticSearch REST Client.
      */
     public void sendRequest() {
-        Request request = new Request("POST", "/" + this.esIndex + "/_bulk");
+        Request request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
         StringBuilder bulkRequestBody = new StringBuilder();
-        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
+        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
 
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);
@@ -122,7 +122,7 @@ public class ElasticSearchMetricSender {
             }
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
-                logger.error("Exception" + e);
+                logger.error("Exception: " + e);
                 logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
             }
         }
