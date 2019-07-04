@@ -129,8 +129,7 @@ public class ElasticSearchMetricSender {
      * This method sends the ElasticSearch documents for each document present in the list (metricList). All is being
      * sent through the low-level ElasticSearch REST Client.
      */
-    public void sendRequest() {
-    	int elasticSearchVersionPrefix = getElasticSearchVersion();
+    public void sendRequest(int elasticSearchVersionPrefix) {
     	logger.info("Elastic Search version : "  + Integer.toString(elasticSearchVersionPrefix));
     	Request request;
     	StringBuilder bulkRequestBody = new StringBuilder();
