@@ -80,6 +80,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private Set<String> fields;
     private int buildNumber;
     private int bulkSize;
+    private int esVersion;
     private long timeoutMs;
 
     public ElasticsearchBackendClient() {
@@ -136,6 +137,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD),
                     context.getParameter(ES_AWS_ENDPOINT));
             this.sender.createIndex();
+            this.esVersion = sender.getElasticSearchVersion();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
             super.setupTest(context);
@@ -202,7 +204,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
         if (this.sender.getListSize() >= this.bulkSize) {
             try {
-                this.sender.sendRequest();
+                this.sender.sendRequest(this.esVersion);
             } catch (Exception e) {
                 logger.error("Error occured while sending bulk request.", e);
             } finally {
@@ -214,7 +216,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     @Override
     public void teardownTest(BackendListenerContext context) throws Exception {
         if (this.sender.getListSize() > 0) {
-            this.sender.sendRequest();
+            this.sender.sendRequest(this.esVersion);
         }
         this.sender.closeConnection();
         super.teardownTest(context);
