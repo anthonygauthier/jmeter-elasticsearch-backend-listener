@@ -137,7 +137,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD),
                     context.getParameter(ES_AWS_ENDPOINT));
             this.sender.createIndex();
-            this.esVersion = int sender.getElasticSearchVersion();
+            this.esVersion = sender.getElasticSearchVersion();
 
             checkTestMode(context.getParameter(ES_TEST_MODE));
             super.setupTest(context);
