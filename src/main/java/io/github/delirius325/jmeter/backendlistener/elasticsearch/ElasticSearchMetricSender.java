@@ -10,10 +10,13 @@ import java.util.List;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,16 +98,51 @@ public class ElasticSearchMetricSender {
             logger.info("Index already exists!");
         }
     }
+    
+    public int getElasticSearchVersion() {
+    	Request request = new Request("GET", "/" );
+    	int elasticSearchVersion = -1;
+    	 try {
+             Response response = this.client.performRequest(setAuthorizationHeader(request));
+             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
+                 logger.error("Unable to perform request to ElasticSearch engine", this.esIndex);
+             }else {
+            	 String responseBody = EntityUtils.toString(response.getEntity());
+            	 JSONParser parser = new JSONParser();
+     			 JSONObject elasticSearchConfig = (JSONObject) parser.parse(responseBody);
+     			 JSONObject version  = (JSONObject)elasticSearchConfig.get("version");
+     			 String elasticVersion =  version.get("number").toString();
+     			 elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
+     			 
+             }
+         } catch (Exception e) {
+             if (logger.isErrorEnabled()) {
+                 logger.error("Exception" + e);
+                 logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
+             }
+         }
+    	 return elasticSearchVersion;
+    }
+    
 
     /**
      * This method sends the ElasticSearch documents for each document present in the list (metricList). All is being
      * sent through the low-level ElasticSearch REST Client.
      */
-    public void sendRequest() {
-        Request request = new Request("POST", "/" + this.esIndex + "/_bulk");
-        StringBuilder bulkRequestBody = new StringBuilder();
-        String actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
-
+    public void sendRequest(int elasticSearchVersionPrefix) {
+    	logger.info("Elastic Search version : "  + Integer.toString(elasticSearchVersionPrefix));
+    	Request request;
+    	StringBuilder bulkRequestBody = new StringBuilder();
+    	String actionMetaData;
+    	if(elasticSearchVersionPrefix < 7) {
+    		 request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
+ 			 actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
+    	}
+    	else {
+    		 request = new Request("POST", "/" + this.esIndex + "/_bulk");
+    		 actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
+    	}
+    		
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);
             bulkRequestBody.append(metric);
@@ -123,6 +161,7 @@ public class ElasticSearchMetricSender {
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
                 logger.error("Exception" + e);
+                logger.error("Elastic Search Request End Point: " + request.getEndpoint());
                 logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
             }
         }
