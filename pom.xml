@@ -3,7 +3,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>main.java.io.github.delirius325</groupId>
+	<groupId>io.github.delirius325</groupId>
 	<artifactId>jmeter.backendlistener.elasticsearch</artifactId>
 	<version>2.6.6</version>
 	<packaging>jar</packaging>

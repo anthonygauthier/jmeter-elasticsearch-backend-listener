@@ -15,8 +15,7 @@ import org.elasticsearch.client.Request;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,12 +107,11 @@ public class ElasticSearchMetricSender {
                  logger.error("Unable to perform request to ElasticSearch engine", this.esIndex);
              }else {
             	 String responseBody = EntityUtils.toString(response.getEntity());
-            	 JSONParser parser = new JSONParser();
-     			 JSONObject elasticSearchConfig = (JSONObject) parser.parse(responseBody);
-     			 JSONObject version  = (JSONObject)elasticSearchConfig.get("version");
+     			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
+     			 JSONObject version  = (JSONObject) elasticSearchConfig.get("version");
      			 String elasticVersion =  version.get("number").toString();
      			 elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
-     			 
+                 logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
              }
          } catch (Exception e) {
              if (logger.isErrorEnabled()) {
@@ -130,7 +128,6 @@ public class ElasticSearchMetricSender {
      * sent through the low-level ElasticSearch REST Client.
      */
     public void sendRequest(int elasticSearchVersionPrefix) {
-    	logger.info("Elastic Search version : "  + Integer.toString(elasticSearchVersionPrefix));
     	Request request;
     	StringBuilder bulkRequestBody = new StringBuilder();
     	String actionMetaData;
