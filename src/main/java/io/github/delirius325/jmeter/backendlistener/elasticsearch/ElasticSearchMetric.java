@@ -206,28 +206,35 @@ public class ElasticSearchMetric {
      */
     private void parseHeadersAsJsonProps(boolean allReqHeaders, boolean allResHeaders) {
         LinkedList<String[]> headersArrayList = new LinkedList<String[]>();
+		
+		if (allReqHeaders) {
+			headersArrayList.add(this.sampleResult.getRequestHeaders().split("\n"));
+		}
 
-        if (allReqHeaders) {
-            headersArrayList.add(this.sampleResult.getRequestHeaders().split("\n"));
-        }
-
-        if (allResHeaders) {
-            headersArrayList.add(this.sampleResult.getResponseHeaders().split("\n"));
-        }
+		if (allResHeaders) {
+			headersArrayList.add(this.sampleResult.getResponseHeaders().split("\n"));
+		}
+		
+		if (!allReqHeaders && !allResHeaders) {
+			headersArrayList.add(this.sampleResult.getRequestHeaders().split("\n"));
+			headersArrayList.add(this.sampleResult.getResponseHeaders().split("\n"));
+		}
 
         for(String[] lines : headersArrayList) {
             for(int i=0; i < lines.length; i++) {
                 String[] header = lines[i].split(":",2);
 
-                // if not all req headers and header contains special X-tag
-                if (header.length > 1) {
-                    if (!this.allReqHeaders && header[0].startsWith("X-es-backend")) {
-                        this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
-                    } else {
-                        this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
-                    }
-                }
-            }
+                // if not all res/req headers and header contains special X-tag
+                if (!allReqHeaders && !allResHeaders && header.length > 1) {
+                    if (header[0].startsWith("X-es-backend")) {
+                        this.json.put(header[0].replaceAll("X-es-backend-", "").trim(), header[1].trim());
+					}
+				}
+						
+                if ((allReqHeaders || allResHeaders) && header.length > 1) {
+					this.json.put(header[0].trim(), header[1].trim());
+				}
+			}
         }
     }
 
