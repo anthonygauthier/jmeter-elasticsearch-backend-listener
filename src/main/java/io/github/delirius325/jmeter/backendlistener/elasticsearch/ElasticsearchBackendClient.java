@@ -169,17 +169,41 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
      * @param context
      */
     private void setSSLConfiguration(BackendListenerContext context) {
-        System.setProperty("javax.net.ssl.keyStore", context.getParameter(ES_SSL_KEYSTORE_PATH));
-        System.setProperty("javax.net.ssl.keyStorePassword", context.getParameter(ES_SSL_KEYSTORE_PW));
-        System.setProperty("javax.net.ssl.keyStoreType",
-                FilenameUtils.getExtension(context.getParameter(ES_SSL_KEYSTORE_PATH)).equals("jks") ? "jks" : "pkcs12");
-        //jks (.jks) or pkcs12 (.p12) 
+        String keyStorePath = context.getParameter(ES_SSL_KEYSTORE_PATH);
+        if (!keyStorePath.equalsIgnoreCase("")) {
+            logger.warn("KeyStore system properties overwritten by ES SSL configuration.");
+            System.setProperty("javax.net.ssl.keyStore", keyStorePath);
+            System.setProperty("javax.net.ssl.keyStorePassword", context.getParameter(ES_SSL_KEYSTORE_PW));
+            switch (FilenameUtils.getExtension(keyStorePath)) {
+                case "jks":
+                    System.setProperty("javax.net.ssl.keyStoreType", "jks");
+                    break;
+                case "p12":
+                    System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+                    break;
+                default:
+                    System.setProperty("javax.net.ssl.keyStoreType", "");
+                    break;
+            }
+        }
 
-        System.setProperty("javax.net.ssl.trustStore", context.getParameter(ES_SSL_TRUSTSTORE_PATH));
-        System.setProperty("javax.net.ssl.trustStorePassword", context.getParameter(ES_SSL_TRUSTSTORE_PW));
-        System.setProperty("javax.net.ssl.trustStoreType",
-                FilenameUtils.getExtension(context.getParameter(ES_SSL_TRUSTSTORE_PATH)).equals("jks") ? "jks"
-                        : "pkcs12");
+        String trustStorePath = context.getParameter(ES_SSL_TRUSTSTORE_PATH);
+        if (!trustStorePath.equalsIgnoreCase("")) {
+            logger.warn("TrustStore system properties overwritten by ES SSL configuration.");
+            System.setProperty("javax.net.ssl.trustStore", trustStorePath);
+            System.setProperty("javax.net.ssl.trustStorePassword", context.getParameter(ES_SSL_TRUSTSTORE_PW));
+            switch (FilenameUtils.getExtension(trustStorePath)) {
+                case "jks":
+                    System.setProperty("javax.net.ssl.trustStoreType", "jks");
+                    break;
+                case "p12":
+                    System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
+                    break;
+                default:
+                    System.setProperty("javax.net.ssl.trustStoreType", "");
+                    break;
+            }
+        }
 
     }
 
