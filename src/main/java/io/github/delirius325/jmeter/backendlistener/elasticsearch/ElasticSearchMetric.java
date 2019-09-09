@@ -74,7 +74,7 @@ public class ElasticSearchMetric {
         addFilteredJSON("TestStartTime", JMeterContextService.getTestStartTime());
         addFilteredJSON("SampleStartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
         addFilteredJSON("SampleEndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
-        addFilteredJSON("Timestamp", sdf.format(new Date(this.sampleResult.getTimeStamp())));
+        addFilteredJSON("Timestamp", this.sampleResult.getTimeStamp());
         addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
 
         // Add the details according to the mode that is set
@@ -94,7 +94,7 @@ public class ElasticSearchMetric {
         }
 
         addAssertions();
-        addElapsedTime(sdf);
+        addElapsedTime();
         addCustomFields(context);
         parseHeadersAsJsonProps(this.allReqHeaders, this.allResHeaders);
 
@@ -134,10 +134,8 @@ public class ElasticSearchMetric {
      * tests were launched from a CI tool (i.e Jenkins), it will add a hard-coded version of the ElapsedTime for results
      * comparison purposes
      *
-     * @param sdf
-     *            SimpleDateFormat
      */
-    private void addElapsedTime(SimpleDateFormat sdf) {
+    private void addElapsedTime() {
         Date elapsedTime;
 
         if (this.ciBuildNumber != 0) {
@@ -145,12 +143,12 @@ public class ElasticSearchMetric {
             addFilteredJSON("BuildNumber", this.ciBuildNumber);
 
             if (elapsedTime != null)
-                addFilteredJSON("ElapsedTimeComparison", sdf.format(elapsedTime));
+                addFilteredJSON("ElapsedTimeComparison", elapsedTime.getTime());
         }
 
         elapsedTime = getElapsedTime(false);
         if (elapsedTime != null)
-            addFilteredJSON("ElapsedTime", sdf.format(elapsedTime));
+            addFilteredJSON("ElapsedTime", elapsedTime.getTime());
     }
 
     /**
