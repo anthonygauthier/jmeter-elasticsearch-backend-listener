@@ -220,7 +220,7 @@ public class ElasticSearchMetric {
                 // if not all req headers and header contains special X-tag
                 if (header.length > 1) {
                     if (!this.allReqHeaders && header[0].startsWith("X-es-backend") || this.allReqHeaders) {
-                        this.json.put(header[0].replaceAll("es-", "").trim(), header[1].trim());
+                        this.json.put(header[0].replaceAll("X-es-backend", "").trim(), header[1].trim());
                     }
                 }
             }
