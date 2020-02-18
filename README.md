@@ -46,7 +46,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
   * __quiet__ : Only sends the response time, bytes, and other metrics
   * __error__ : Only sends the failing samplers to the ElasticSearch engine (Along with their headers and body information).
 * Use either Kibana or Grafana to vizualize your results!
-  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change de data source!
+  * [Click here to get a sample Grafana dashboard!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/JMeter-Generic-Dashboard) - All you need to do is import it into Grafana and change the data source!
 * Continuous Integration support - [Build comparison!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Continuous-Integration---Build-Comparison)
 * Send JMeter variables to ElasticSearch! [Refer to this for more info!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Sending-JMeter-variables) 
 * New AWS ES parameters introducted in 2.6.0 version which leverage Role based authentication to access Elastic Search managed hosting on AWS
@@ -56,7 +56,8 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 <dependency>
   <groupId>io.github.delirius325</groupId>
   <artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-  <version>2.6.7</version>
+  <version>2.6.9</version>
+</dependency>
 ```
 
 ## Contributing
