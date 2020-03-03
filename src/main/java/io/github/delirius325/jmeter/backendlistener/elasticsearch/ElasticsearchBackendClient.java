@@ -1,4 +1,4 @@
-package io.github.delirius325.jmeter.backendlistener.elasticsearch;
+    package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -11,7 +11,6 @@ import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
-import org.apache.jmeter.visualizers.backend.BackendListener;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.RestClient;

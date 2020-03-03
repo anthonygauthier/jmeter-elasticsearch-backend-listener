@@ -20,6 +20,8 @@ import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.commons.lang.math.NumberUtils.isNumber;
+
 public class ElasticSearchMetric {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
     private SampleResult sampleResult;
@@ -31,8 +33,9 @@ public class ElasticSearchMetric {
     private boolean allReqHeaders;
     private boolean allResHeaders;
 
-    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber,
-                               boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
+    public ElasticSearchMetric(
+            SampleResult sr, String testMode, String timeStamp, int buildNumber,
+            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
@@ -155,18 +158,16 @@ public class ElasticSearchMetric {
      */
     private void addCustomFields(BackendListenerContext context) {
         Iterator<String> pluginParameters = context.getParameterNamesIterator();
+        String parameter;
         while (pluginParameters.hasNext()) {
             String parameterName = pluginParameters.next();
 
-            if (!parameterName.startsWith("es.") && !context.getParameter(parameterName).trim().equals("")) {
-                String parameter = context.getParameter(parameterName).trim();
-
-                try {
+            if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
+                    && !"".equals(parameter = context.getParameter(parameterName).trim())) {
+                if (isNumber(parameter)) {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
-                } catch (Exception e) {
-                    if (logger.isDebugEnabled())
-                        logger.debug("Cannot convert custom field to number");
-                    addFilteredJSON(parameterName, context.getParameter(parameterName).trim());
+                } else {
+                    addFilteredJSON(parameterName, parameter);
                 }
             }
         }
@@ -217,7 +218,7 @@ public class ElasticSearchMetric {
 
                 // if not all res/req headers and header contains special X-tag
                 if (!allReqHeaders && !allResHeaders && header.length > 1) {
-                    if (header[0].startsWith("X-es-backend")) {
+                    if (header[0].startsWith("X-es-backend-")) {
                         this.json.put(header[0].replaceAll("X-es-backend-", "").trim(), header[1].trim());
                     }
                 }
@@ -280,4 +281,5 @@ public class ElasticSearchMetric {
             return null;
         }
     }
+
 }

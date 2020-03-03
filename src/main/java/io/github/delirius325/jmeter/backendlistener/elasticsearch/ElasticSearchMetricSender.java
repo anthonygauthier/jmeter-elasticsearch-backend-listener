@@ -87,13 +87,11 @@ public class ElasticSearchMetricSender {
 
     /**
      * This method creates the ElasticSearch index.
-     * 
-     * @throws IOException
      */
-    public void createIndex() throws IOException {
+    public void createIndex() {
         try {
             this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.info("Index already exists!");
         }
     }
@@ -104,7 +102,8 @@ public class ElasticSearchMetricSender {
     	 try {
              Response response = this.client.performRequest(setAuthorizationHeader(request));
              if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                 logger.error("Unable to perform request to ElasticSearch engine", this.esIndex);
+                 logger.error("Unable to perform request to ElasticSearch engine for index {}. Response status: {}",
+                              this.esIndex, response.getStatusLine().toString());
              }else {
             	 String responseBody = EntityUtils.toString(response.getEntity());
      			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
@@ -152,8 +151,14 @@ public class ElasticSearchMetricSender {
 
             Response response = this.client.performRequest(setAuthorizationHeader(request));
 
-            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
+            if (logger.isErrorEnabled()) {
+                if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                    logger.error("ElasticSearch Backend Listener failed to write results for index {}. Response status: {}",
+                                 this.esIndex, response.getStatusLine().toString());
+                } else {
+                    logger.debug("ElasticSearch Backend Listener has successfully written to ES instance [{}] _bulk request {}",
+                                 client.getNodes().iterator().next().getHost().toHostString(), request.toString());
+                }
             }
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {

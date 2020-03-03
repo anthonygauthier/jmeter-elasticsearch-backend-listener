@@ -52,7 +52,7 @@ public class TestElasticSearchBackendHTTPsConnection {
     }
 
     @Test
-    public void createIndex() throws Exception {
+    public void createIndex() {
         sender.createIndex();
     }
 }
