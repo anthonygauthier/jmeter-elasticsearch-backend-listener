@@ -31,8 +31,9 @@ public class ElasticSearchMetric {
     private boolean allReqHeaders;
     private boolean allResHeaders;
 
-    public ElasticSearchMetric(SampleResult sr, String testMode, String timeStamp, int buildNumber,
-                               boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
+    public ElasticSearchMetric(
+            SampleResult sr, String testMode, String timeStamp, int buildNumber,
+            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
@@ -161,12 +162,9 @@ public class ElasticSearchMetric {
 
             if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
                     && !"".equals(parameter = context.getParameter(parameterName).trim())) {
-
-                try {
+                if (isInteger(parameter)) {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
-                } catch (NumberFormatException e) {
-                    if (logger.isDebugEnabled())
-                        logger.debug("Cannot convert custom field to number [name={}, value={}]]", parameterName, parameter);
+                } else {
                     addFilteredJSON(parameterName, parameter);
                 }
             }
@@ -280,5 +278,29 @@ public class ElasticSearchMetric {
             logger.error("Unexpected error occured computing elapsed date", e);
             return null;
         }
+    }
+
+    private static boolean isInteger(String str) {
+        if (str == null) {
+            return false;
+        }
+        int length = str.length();
+        if (length == 0) {
+            return false;
+        }
+        int i = 0;
+        if (str.charAt(0) == '-') {
+            if (length == 1) {
+                return false;
+            }
+            i = 1;
+        }
+        for (; i < length; i++) {
+            char c = str.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -87,13 +87,11 @@ public class ElasticSearchMetricSender {
 
     /**
      * This method creates the ElasticSearch index.
-     * 
-     * @throws IOException
      */
-    public void createIndex() throws IOException {
+    public void createIndex() {
         try {
             this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.info("Index already exists!");
         }
     }
