@@ -20,6 +20,8 @@ import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.apache.commons.lang.math.NumberUtils.isNumber;
+
 public class ElasticSearchMetric {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
     private SampleResult sampleResult;
@@ -162,7 +164,7 @@ public class ElasticSearchMetric {
 
             if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
                     && !"".equals(parameter = context.getParameter(parameterName).trim())) {
-                if (isInteger(parameter)) {
+                if (isNumber(parameter)) {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
                 } else {
                     addFilteredJSON(parameterName, parameter);
@@ -280,27 +282,4 @@ public class ElasticSearchMetric {
         }
     }
 
-    private static boolean isInteger(String str) {
-        if (str == null) {
-            return false;
-        }
-        int length = str.length();
-        if (length == 0) {
-            return false;
-        }
-        int i = 0;
-        if (str.charAt(0) == '-') {
-            if (length == 1) {
-                return false;
-            }
-            i = 1;
-        }
-        for (; i < length; i++) {
-            char c = str.charAt(i);
-            if (c < '0' || c > '9') {
-                return false;
-            }
-        }
-        return true;
-    }
 }
