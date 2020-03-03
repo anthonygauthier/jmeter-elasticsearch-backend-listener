@@ -155,18 +155,19 @@ public class ElasticSearchMetric {
      */
     private void addCustomFields(BackendListenerContext context) {
         Iterator<String> pluginParameters = context.getParameterNamesIterator();
+        String parameter;
         while (pluginParameters.hasNext()) {
             String parameterName = pluginParameters.next();
 
-            if (!parameterName.startsWith("es.") && !context.getParameter(parameterName).trim().equals("")) {
-                String parameter = context.getParameter(parameterName).trim();
+            if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
+                    && !"".equals(parameter = context.getParameter(parameterName).trim())) {
 
                 try {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     if (logger.isDebugEnabled())
-                        logger.debug("Cannot convert custom field to number");
-                    addFilteredJSON(parameterName, context.getParameter(parameterName).trim());
+                        logger.debug("Cannot convert custom field to number [name={}, value={}]]", parameterName, parameter);
+                    addFilteredJSON(parameterName, parameter);
                 }
             }
         }
@@ -217,7 +218,7 @@ public class ElasticSearchMetric {
 
                 // if not all res/req headers and header contains special X-tag
                 if (!allReqHeaders && !allResHeaders && header.length > 1) {
-                    if (header[0].startsWith("X-es-backend")) {
+                    if (header[0].startsWith("X-es-backend-")) {
                         this.json.put(header[0].replaceAll("X-es-backend-", "").trim(), header[1].trim());
                     }
                 }

@@ -104,7 +104,8 @@ public class ElasticSearchMetricSender {
     	 try {
              Response response = this.client.performRequest(setAuthorizationHeader(request));
              if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                 logger.error("Unable to perform request to ElasticSearch engine", this.esIndex);
+                 logger.error("Unable to perform request to ElasticSearch engine for index {}. Response status: {}",
+                              this.esIndex, response.getStatusLine().toString());
              }else {
             	 String responseBody = EntityUtils.toString(response.getEntity());
      			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
@@ -153,7 +154,10 @@ public class ElasticSearchMetricSender {
             Response response = this.client.performRequest(setAuthorizationHeader(request));
 
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                logger.error("ElasticSearch Backend Listener failed to write results for index {}", this.esIndex);
+                logger.error("ElasticSearch Backend Listener failed to write results for index {}. Response status: {}",
+                             this.esIndex, response.getStatusLine().toString());
+            } else {
+                logger.debug("ElasticSearch Backend Listener has successfully written results for index {}", this.esIndex);
             }
         } catch (Exception e) {
             if (logger.isErrorEnabled()) {
