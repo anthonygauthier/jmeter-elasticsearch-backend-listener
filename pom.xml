@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.delirius325</groupId>
 	<artifactId>jmeter.backendlistener.elasticsearch</artifactId>
-	<version>2.6.10-SNAPSHOT</version>
+	<version>2.6.11</version>
 	<packaging>jar</packaging>
 
 	<name>jmeter.backendlistener.elasticsearch</name>
@@ -37,13 +37,18 @@
 			<url>http://www.github.com/delirius325</url>
 			<timezone>America/New_York</timezone>
 		</developer>
-		<developer>
-			<id>siggitrain</id>
+	</developers>
+
+	<contributors>
+		<contributor>
 			<name>Christian Weber</name>
 			<url>http://www.github.com/siggitrain</url>
 			<timezone>MESZ</timezone>
-		</developer>
-	</developers>
+			<properties>
+				<github>siggitrain</github>
+			</properties>
+		</contributor>
+	</contributors>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -55,9 +60,9 @@
 		<junit.vintage.version>${junit.version}.0</junit.vintage.version>
 		<junit.jupiter.version>5.0.0</junit.jupiter.version>
 		<junit.platform.version>1.0.0</junit.platform.version>
-		<org.apache.jmeter.version>5.0</org.apache.jmeter.version>
-		<org.apache.commons>3.7</org.apache.commons>
-		<org.elasticsearch.client>6.4.0</org.elasticsearch.client>
+		<org.apache.jmeter.version>5.3</org.apache.jmeter.version>
+		<org.apache.commons>3.9</org.apache.commons>
+		<org.elasticsearch.client>6.7.1</org.elasticsearch.client>
 	</properties>
 	<dependencies>
 		<dependency>

@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
+import org.apache.jmeter.JMeter;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
@@ -100,7 +101,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.fields = new HashSet<>();
             this.modes = new HashSet<>(Arrays.asList("info", "debug", "error", "quiet"));
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
-            this.timeoutMs = JMeterUtils.getPropDefault(ES_TIMEOUT_MS, DEFAULT_TIMEOUT_MS);
+            this.timeoutMs = Integer.parseInt((context.getParameter(ES_TIMEOUT_MS)));
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null
                     && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals(""))
                             ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
@@ -118,7 +119,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                             public void onFailure(Node node) {
                                 logger.error("Error with node: " + node.toString());
                             }
-                        }).setMaxRetryTimeoutMillis(60000).build();
+                        }).build();
             } else {
                 AWS4Signer signer = new AWS4Signer();
                 signer.setServiceName(SERVICE_NAME);
