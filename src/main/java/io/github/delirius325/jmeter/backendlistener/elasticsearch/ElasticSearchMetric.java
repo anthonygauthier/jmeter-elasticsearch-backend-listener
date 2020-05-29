@@ -20,7 +20,7 @@ import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.commons.lang.math.NumberUtils.isNumber;
+import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class ElasticSearchMetric {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
@@ -164,7 +164,7 @@ public class ElasticSearchMetric {
 
             if (!parameterName.startsWith("es.") && context.containsParameter(parameterName)
                     && !"".equals(parameter = context.getParameter(parameterName).trim())) {
-                if (isNumber(parameter)) {
+                if (isCreatable(parameter)) {
                     addFilteredJSON(parameterName, Long.parseLong(parameter));
                 } else {
                     addFilteredJSON(parameterName, parameter);
