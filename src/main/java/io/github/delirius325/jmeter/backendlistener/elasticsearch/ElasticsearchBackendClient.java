@@ -282,7 +282,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                 Pattern pattern = Pattern.compile(filter);
                 Matcher matcher = pattern.matcher(sampleLabel);
 
-                if (sampleLabel.contains(filter) || matcher.find()) {
+                if (!sampleLabel.startsWith("!!") && (sampleLabel.contains(filter) || matcher.find())) {
                     valid = true;
                     break;
                 } else {
