@@ -7,7 +7,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
-import org.apache.jmeter.JMeter;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
@@ -25,6 +27,7 @@ import com.amazonaws.http.AWSRequestSigningApacheInterceptor;
 import com.google.gson.Gson;
 
 public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
+
     private static final String BUILD_NUMBER = "BuildNumber";
     private static final String ES_SCHEME = "es.scheme";
     private static final String ES_HOST = "es.host";
@@ -46,6 +49,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_SSL_TRUSTSTORE_PW = "es.ssl.truststore.pw";
     private static final String ES_SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
     private static final String ES_SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
+    private static final String ES_SSL_VERIFICATION_MODE = "es.ssl.verificationMode";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final String SERVICE_NAME = "es";
     private static RestClient client;
@@ -73,6 +77,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_SSL_TRUSTSTORE_PW, "");
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PATH, "");
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PW, "");
+        DEFAULT_ARGS.put(ES_SSL_VERIFICATION_MODE, "full");
     }
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
@@ -83,9 +88,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private int esVersion;
     private long timeoutMs;
 
-    public ElasticsearchBackendClient() {
-        super();
-    }
+    private static final TrustStrategy TRUST_ALL_STRATEGY = (chain, authType) -> true;
 
     @Override
     public Arguments getDefaultParameters() {
@@ -112,6 +115,22 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                 client = RestClient
                         .builder(new HttpHost(context.getParameter(ES_HOST),
                                 Integer.parseInt(context.getParameter(ES_PORT)), context.getParameter(ES_SCHEME)))
+                        .setHttpClientConfigCallback(httpAsyncClientBuilder -> {
+                            if (context.getParameter(ES_SSL_VERIFICATION_MODE).equalsIgnoreCase("none")) {
+                                logger.info("Will trust all remote SSL certificates.");
+                                final SSLContextBuilder contextBuilder = new SSLContextBuilder();
+                                try {
+                                    contextBuilder.loadTrustMaterial(TRUST_ALL_STRATEGY);
+                                    httpAsyncClientBuilder.setSSLContext(contextBuilder.build());
+                                    httpAsyncClientBuilder.setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+                                }
+                                catch (Exception e) {
+                                    // NOTE: purposedly ignored as this strategy does not use any custom algorithm
+                                    // or certificate
+                                }
+                            }
+                            return httpAsyncClientBuilder;
+                        })
                         .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder.setConnectTimeout(5000)
                                 .setSocketTimeout((int) timeoutMs))
                         .setFailureListener(new RestClient.FailureListener() {
