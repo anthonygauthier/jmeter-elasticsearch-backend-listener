@@ -293,9 +293,11 @@ public class ElasticSearchMetric {
     }
 
     /**
-     * Adds key-value pairs splitted from SampleLabel by delimiters
-     * Eg. SampleLabel "Id:01_Transaction:Login" is parsed as field name
-     * "Id" with value "01" and field name "Transaction" with value "Login" (if delimiters are _ and :)
+     * Adds key-value pairs which are split from SampleLabel by delimiters
+     * Eg. SampleLabel "Id:01_Transaction:Login" is parsed as:
+     *  field name "Id" with value "01"
+     *  field name "Transaction" with value "Login"
+     *  (if default delimiters are used)
      */
     private void addSplittedSampleLabel() {
         if (this.sampleResult.getSampleLabel().contains(this.sampleLabelDelimiter)
@@ -303,8 +305,8 @@ public class ElasticSearchMetric {
             String[] sampleLabelParams = this.sampleResult.getSampleLabel().split(this.sampleLabelDelimiter);
             for (String param : sampleLabelParams) {
                 if (param.contains(this.parseSampleLabelKeyValueDelimiter)) {
-                    String[] splittedParams = param.split(this.parseSampleLabelKeyValueDelimiter);
-                    addFilteredJSON(splittedParams[0], splittedParams[1]);
+                    String[] splitParams = param.split(this.parseSampleLabelKeyValueDelimiter);
+                    addFilteredJSON(splitParams[0], splitParams[1]);
                 }
             }
         }
