@@ -39,7 +39,7 @@ public class ElasticSearchMetricSender {
 
     /**
      * This method returns the current size of the ElasticSearch documents list
-     * 
+     *
      * @return integer representing the size of the ElasticSearch documents list
      */
     public int getListSize() {
@@ -62,7 +62,7 @@ public class ElasticSearchMetricSender {
 
     /**
      * This method adds a metric to the list (metricList).
-     * 
+     *
      * @param metric
      *            String parameter representing a JSON document for ElasticSearch
      */
@@ -95,50 +95,50 @@ public class ElasticSearchMetricSender {
             logger.info("Index already exists!");
         }
     }
-    
+
     public int getElasticSearchVersion() {
-    	Request request = new Request("GET", "/" );
-    	int elasticSearchVersion = -1;
-    	 try {
-             Response response = this.client.performRequest(setAuthorizationHeader(request));
-             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
-                 logger.error("Unable to perform request to ElasticSearch engine for index {}. Response status: {}",
-                              this.esIndex, response.getStatusLine().toString());
-             }else {
-            	 String responseBody = EntityUtils.toString(response.getEntity());
-     			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
-     			 JSONObject version  = (JSONObject) elasticSearchConfig.get("version");
-     			 String elasticVersion =  version.get("number").toString();
-     			 elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
-                 logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
-             }
-         } catch (Exception e) {
-             if (logger.isErrorEnabled()) {
-                 logger.error("Exception" + e);
-                 logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
-             }
-         }
-    	 return elasticSearchVersion;
+        Request request = new Request("GET", "/" );
+        int elasticSearchVersion = -1;
+        try {
+            Response response = this.client.performRequest(setAuthorizationHeader(request));
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
+                logger.error("Unable to perform request to ElasticSearch engine for index {}. Response status: {}",
+                        this.esIndex, response.getStatusLine().toString());
+            }else {
+                String responseBody = EntityUtils.toString(response.getEntity());
+                JSONObject elasticSearchConfig = new JSONObject(responseBody);
+                JSONObject version  = (JSONObject) elasticSearchConfig.get("version");
+                String elasticVersion =  version.get("number").toString();
+                elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
+                logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Exception" + e);
+                logger.error("ElasticSearch Backend Listener was unable to perform request to the ElasticSearch engine. Check your JMeter console for more info.");
+            }
+        }
+        return elasticSearchVersion;
     }
-    
+
 
     /**
      * This method sends the ElasticSearch documents for each document present in the list (metricList). All is being
      * sent through the low-level ElasticSearch REST Client.
      */
     public void sendRequest(int elasticSearchVersionPrefix) {
-    	Request request;
-    	StringBuilder bulkRequestBody = new StringBuilder();
-    	String actionMetaData;
-    	if(elasticSearchVersionPrefix < 7) {
-    		 request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
- 			 actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
-    	}
-    	else {
-    		 request = new Request("POST", "/" + this.esIndex + "/_bulk");
-    		 actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
-    	}
-    		
+        Request request;
+        StringBuilder bulkRequestBody = new StringBuilder();
+        String actionMetaData;
+        if(elasticSearchVersionPrefix < 7) {
+            request = new Request("POST", "/" + this.esIndex + "/SampleResult/_bulk");
+            actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex, "SampleResult");
+        }
+        else {
+            request = new Request("POST", "/" + this.esIndex + "/_bulk");
+            actionMetaData = String.format(SEND_BULK_REQUEST, this.esIndex);
+        }
+
         for (String metric : this.metricList) {
             bulkRequestBody.append(actionMetaData);
             bulkRequestBody.append(metric);
@@ -154,10 +154,10 @@ public class ElasticSearchMetricSender {
             if (logger.isErrorEnabled()) {
                 if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                     logger.error("ElasticSearch Backend Listener failed to write results for index {}. Response status: {}",
-                                 this.esIndex, response.getStatusLine().toString());
+                            this.esIndex, response.getStatusLine().toString());
                 } else {
                     logger.debug("ElasticSearch Backend Listener has successfully written to ES instance [{}] _bulk request {}",
-                                 client.getNodes().iterator().next().getHost().toHostString(), request.toString());
+                            client.getNodes().iterator().next().getHost().toHostString(), request.toString());
                 }
             }
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-    package io.github.delirius325.jmeter.backendlistener.elasticsearch;
+package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -46,6 +46,9 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_SSL_TRUSTSTORE_PW = "es.ssl.truststore.pw";
     private static final String ES_SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
     private static final String ES_SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
+    private static final String ES_PARSE_SAMPLE_LABEL = "es.parse.samplelabel";
+    private static final String ES_PARSE_SAMPLE_LABEL_DELIMITER = "es.parse.samplelabel.delimiter";
+    private static final String ES_PARSE_SAMPLE_LABEL_KEY_VALUE_DELIMITER = "es.parse.samplelabel.keyvalue.delimiter";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final String SERVICE_NAME = "es";
     private static RestClient client;
@@ -73,6 +76,10 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_SSL_TRUSTSTORE_PW, "");
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PATH, "");
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PW, "");
+        DEFAULT_ARGS.put(ES_PARSE_SAMPLE_LABEL, "false");
+        DEFAULT_ARGS.put(ES_PARSE_SAMPLE_LABEL_DELIMITER, "_");
+        DEFAULT_ARGS.put(ES_PARSE_SAMPLE_LABEL_KEY_VALUE_DELIMITER, ":");
+
     }
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
@@ -104,7 +111,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.timeoutMs = Integer.parseInt((context.getParameter(ES_TIMEOUT_MS)));
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null
                     && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals(""))
-                            ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
+                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
 
             setSSLConfiguration(context);
 
@@ -213,7 +220,11 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE),
                     context.getParameter(ES_TIMESTAMP), this.buildNumber,
                     context.getBooleanParameter(ES_PARSE_REQ_HEADERS, false),
-                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false), fields);
+                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false), fields,
+                    context.getBooleanParameter(ES_PARSE_SAMPLE_LABEL, false),
+                    context.getParameter(ES_PARSE_SAMPLE_LABEL_DELIMITER),
+                    context.getParameter(ES_PARSE_SAMPLE_LABEL_KEY_VALUE_DELIMITER)
+            );
 
             if (validateSample(context, sr)) {
                 try {
@@ -248,7 +259,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     /**
      * This method checks if the test mode is valid
-     * 
+     *
      * @param mode
      *            The test mode as String
      */
@@ -266,7 +277,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     /**
      * This method will validate the current sample to see if it is part of the filters or not.
-     * 
+     *
      * @param context
      *            The Backend Listener's context
      * @param sr
