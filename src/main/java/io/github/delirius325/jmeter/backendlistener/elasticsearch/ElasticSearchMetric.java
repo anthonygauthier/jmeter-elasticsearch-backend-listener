@@ -30,15 +30,17 @@ public class ElasticSearchMetric {
     private int ciBuildNumber;
     private HashMap<String, Object> json;
     private Set<String> fields;
+    private Map<String,String> esFieldNameMap;
     private boolean allReqHeaders;
     private boolean allResHeaders;
 
     public ElasticSearchMetric(
             SampleResult sr, String testMode, String timeStamp, int buildNumber,
-            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
+            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields, Map<String,String> fieldNameMap) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
+        this.esFieldNameMap = fieldNameMap;
         this.ciBuildNumber = buildNumber;
         this.json = new HashMap<>();
         this.allReqHeaders = parseReqHeaders;
@@ -56,28 +58,28 @@ public class ElasticSearchMetric {
         SimpleDateFormat sdf = new SimpleDateFormat(this.esTimestamp);
 
         //add all the default SampleResult parameters
-        addFilteredJSON("AllThreads", this.sampleResult.getAllThreads());
-        addFilteredJSON("BodySize", this.sampleResult.getBodySizeAsLong());
-        addFilteredJSON("Bytes", this.sampleResult.getBytesAsLong());
-        addFilteredJSON("SentBytes", this.sampleResult.getSentBytes());
-        addFilteredJSON("ConnectTime", this.sampleResult.getConnectTime());
-        addFilteredJSON("ContentType", this.sampleResult.getContentType());
-        addFilteredJSON("DataType", this.sampleResult.getDataType());
-        addFilteredJSON("ErrorCount", this.sampleResult.getErrorCount());
-        addFilteredJSON("GrpThreads", this.sampleResult.getGroupThreads());
-        addFilteredJSON("IdleTime", this.sampleResult.getIdleTime());
-        addFilteredJSON("Latency", this.sampleResult.getLatency());
-        addFilteredJSON("ResponseTime", this.sampleResult.getTime());
-        addFilteredJSON("SampleCount", this.sampleResult.getSampleCount());
-        addFilteredJSON("SampleLabel", this.sampleResult.getSampleLabel());
-        addFilteredJSON("ThreadName", this.sampleResult.getThreadName());
-        addFilteredJSON("URL", this.sampleResult.getURL());
-        addFilteredJSON("ResponseCode", this.sampleResult.getResponseCode());
-        addFilteredJSON("TestStartTime", JMeterContextService.getTestStartTime());
-        addFilteredJSON("SampleStartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
-        addFilteredJSON("SampleEndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
-        addFilteredJSON("Timestamp", this.sampleResult.getTimeStamp());
-        addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
+        addFilteredJSON(this.esFieldNameMap.get("AllThreads"), this.sampleResult.getAllThreads());
+        addFilteredJSON(this.esFieldNameMap.get("BodySize"), this.sampleResult.getBodySizeAsLong());
+        addFilteredJSON(this.esFieldNameMap.get("Bytes"), this.sampleResult.getBytesAsLong());
+        addFilteredJSON(this.esFieldNameMap.get("SentBytes"), this.sampleResult.getSentBytes());
+        addFilteredJSON(this.esFieldNameMap.get("ConnectTime"), this.sampleResult.getConnectTime());
+        addFilteredJSON(this.esFieldNameMap.get("ContentType"), this.sampleResult.getContentType());
+        addFilteredJSON(this.esFieldNameMap.get("DataType"), this.sampleResult.getDataType());
+        addFilteredJSON(this.esFieldNameMap.get("ErrorCount"), this.sampleResult.getErrorCount());
+        addFilteredJSON(this.esFieldNameMap.get("GrpThreads"), this.sampleResult.getGroupThreads());
+        addFilteredJSON(this.esFieldNameMap.get("IdleTime"), this.sampleResult.getIdleTime());
+        addFilteredJSON(this.esFieldNameMap.get("Latency"), this.sampleResult.getLatency());
+        addFilteredJSON(this.esFieldNameMap.get("ResponseTime"), this.sampleResult.getTime());
+        addFilteredJSON(this.esFieldNameMap.get("SampleCount"), this.sampleResult.getSampleCount());
+        addFilteredJSON(this.esFieldNameMap.get("SampleLabel"), this.sampleResult.getSampleLabel());
+        addFilteredJSON(this.esFieldNameMap.get("ThreadName"), this.sampleResult.getThreadName());
+        addFilteredJSON(this.esFieldNameMap.get("URL"), this.sampleResult.getURL());
+        addFilteredJSON(this.esFieldNameMap.get("ResponseCode"), this.sampleResult.getResponseCode());
+        addFilteredJSON(this.esFieldNameMap.get("TestStartTime"), JMeterContextService.getTestStartTime());
+        addFilteredJSON(this.esFieldNameMap.get("SampleStartTime"), sdf.format(new Date(this.sampleResult.getStartTime())));
+        addFilteredJSON(this.esFieldNameMap.get("SampleEndTime"), sdf.format(new Date(this.sampleResult.getEndTime())));
+        addFilteredJSON(this.esFieldNameMap.get("Timestamp"), this.sampleResult.getTimeStamp());
+        addFilteredJSON(this.esFieldNameMap.get("InjectorHostname"), InetAddress.getLocalHost().getHostName());
 
         // Add the details according to the mode that is set
         switch (this.esTestMode) {
