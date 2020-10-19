@@ -47,7 +47,7 @@ public class TestElasticSearchBackendHTTPsConnection {
                         System.err.println("Error with node: " + node.toString());
                     }
                 }).setMaxRetryTimeoutMillis(60000).build();
-        sender = new ElasticSearchMetricSender(client, "test_" + sdf.format(new Date()), "logstashTest",
+        sender = new ElasticSearchMetricSender(client, "", "test_" + sdf.format(new Date()), "logstashTest",
                 "logstashTest", "");
     }
 

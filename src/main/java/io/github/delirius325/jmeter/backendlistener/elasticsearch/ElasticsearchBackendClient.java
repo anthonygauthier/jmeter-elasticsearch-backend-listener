@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
-import org.apache.jmeter.JMeter;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.samplers.SampleResult;
 import org.apache.jmeter.util.JMeterUtils;
@@ -119,7 +118,8 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                             public void onFailure(Node node) {
                                 logger.error("Error with node: " + node.toString());
                             }
-                        }).build();
+                        })
+                        .build();
             } else {
                 AWS4Signer signer = new AWS4Signer();
                 signer.setServiceName(SERVICE_NAME);
@@ -133,7 +133,9 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             convertParameterToSet(context, ES_SAMPLE_FILTER, this.filters);
             convertParameterToSet(context, ES_FIELDS, this.fields);
 
-            this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase(),
+            this.sender = new ElasticSearchMetricSender(client, 
+                    context.getParameter(ES_HOST),
+                    context.getParameter(ES_INDEX).toLowerCase(),
                     context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD),
                     context.getParameter(ES_AWS_ENDPOINT));
             this.sender.createIndex();
