@@ -185,9 +185,9 @@ public class ElasticSearchMetric {
     }
 
     /**
-     * This method will parse the headers and look for custom variables passed through as header. It can also seperate
-     * all headers into different ElasticSearch document properties by passing "true" This is a work-around the native
-     * behaviour of JMeter where variables are not accessible within the backend listener.
+     * This method will parse the headers and look for custom variables passed through as header. It can also separate
+     * all headers into different ElasticSearch document properties by passing "true" This is a work-around for the 
+     * native behaviour of JMeter, where variables are not accessible within the backend listener.
      *
      * @param allReqHeaders boolean to determine if the user wants to separate ALL request headers into different ES JSON
      *                      properties.
