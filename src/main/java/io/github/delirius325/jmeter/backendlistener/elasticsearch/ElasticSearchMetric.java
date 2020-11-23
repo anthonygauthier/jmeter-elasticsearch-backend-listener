@@ -32,10 +32,14 @@ public class ElasticSearchMetric {
     private Set<String> fields;
     private boolean allReqHeaders;
     private boolean allResHeaders;
+    private boolean parseSampleLabel;
+    private String sampleLabelDelimiter;
+    private String parseSampleLabelKeyValueDelimiter;
 
     public ElasticSearchMetric(
             SampleResult sr, String testMode, String timeStamp, int buildNumber,
-            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields) {
+            boolean parseReqHeaders, boolean parseResHeaders, Set<String> fields, boolean parseSampleLabel,
+            String parseSampleLabelDelimiter, String parseSampleLabelKeyValueDelimiter) {
         this.sampleResult = sr;
         this.esTestMode = testMode.trim();
         this.esTimestamp = timeStamp.trim();
@@ -44,6 +48,9 @@ public class ElasticSearchMetric {
         this.allReqHeaders = parseReqHeaders;
         this.allResHeaders = parseResHeaders;
         this.fields = fields;
+        this.parseSampleLabel = parseSampleLabel;
+        this.sampleLabelDelimiter = parseSampleLabelDelimiter;
+        this.parseSampleLabelKeyValueDelimiter = parseSampleLabelKeyValueDelimiter;
     }
 
     /**
@@ -98,6 +105,9 @@ public class ElasticSearchMetric {
         addAssertions();
         addElapsedTime();
         addCustomFields(context);
+        if (parseSampleLabel) {
+            addSplittedSampleLabel();
+        }
         parseHeadersAsJsonProps(this.allReqHeaders, this.allResHeaders);
 
         return this.json;
@@ -279,6 +289,26 @@ public class ElasticSearchMetric {
         } catch (ParseException e) {
             logger.error("Unexpected error occured computing elapsed date", e);
             return null;
+        }
+    }
+
+    /**
+     * Adds key-value pairs which are split from SampleLabel by delimiters
+     * Eg. SampleLabel "Id:01_Transaction:Login" is parsed as:
+     *  field name "Id" with value "01"
+     *  field name "Transaction" with value "Login"
+     *  (if default delimiters are used)
+     */
+    private void addSplittedSampleLabel() {
+        if (this.sampleResult.getSampleLabel().contains(this.sampleLabelDelimiter)
+                || this.sampleResult.getSampleLabel().contains(this.parseSampleLabelKeyValueDelimiter) ) {
+            String[] sampleLabelParams = this.sampleResult.getSampleLabel().split(this.sampleLabelDelimiter);
+            for (String param : sampleLabelParams) {
+                if (param.contains(this.parseSampleLabelKeyValueDelimiter)) {
+                    String[] splitParams = param.split(this.parseSampleLabelKeyValueDelimiter);
+                    addFilteredJSON(splitParams[0], splitParams[1]);
+                }
+            }
         }
     }
 

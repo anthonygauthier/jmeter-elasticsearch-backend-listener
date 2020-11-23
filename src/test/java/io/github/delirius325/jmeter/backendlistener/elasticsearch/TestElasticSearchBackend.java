@@ -18,9 +18,9 @@ public class TestElasticSearchBackend {
     @Before
     public void setUp() throws Exception {
         metricCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 1, false, false,
-                new HashSet<String>());
+                new HashSet<String>(), false, "_", ":");
         metricNoCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 0, false,
-                false, new HashSet<String>());
+                false, new HashSet<String>(), false, "_", ":");
     }
 
     @Test
