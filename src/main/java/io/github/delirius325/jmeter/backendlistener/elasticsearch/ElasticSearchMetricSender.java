@@ -23,18 +23,20 @@ public class ElasticSearchMetricSender {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetricSender.class);
     private RestClient client;
     private String esIndex;
+    private String host;
     private List<String> metricList;
     private String authUser;
     private String authPwd;
     private String awsEndpoint;
 
-    public ElasticSearchMetricSender(RestClient cli, String index, String user, String pwd, String endpoint) {
+    public ElasticSearchMetricSender(RestClient cli, String host, String index, String user, String pwd, String endpoint) {
         this.client = cli;
         this.esIndex = index;
         this.metricList = new LinkedList<String>();
         this.authUser = user.trim();
         this.authPwd = pwd.trim();
         this.awsEndpoint = endpoint;
+        this.host = host;
     }
 
     /**
@@ -73,15 +75,16 @@ public class ElasticSearchMetricSender {
     /**
      * This method sets the Basic Authorization header to requests
      */
-    private Request setAuthorizationHeader(Request request) {
+    private Request setHeaders(Request request) {
+        RequestOptions.Builder options = request.getOptions().toBuilder();
         if (this.awsEndpoint.equals("") && !this.authPwd.equals("")) {
             String encodedCredentials = Base64.getEncoder()
                     .encodeToString((this.authUser + ":" + this.authPwd).getBytes());
-            RequestOptions.Builder options = request.getOptions().toBuilder();
             options.addHeader("Authorization", "Basic " + encodedCredentials);
-            request.setOptions(options);
-
+            
         }
+        options.addHeader("Host", host);
+        request.setOptions(options);
         return request;
     }
 
@@ -90,7 +93,7 @@ public class ElasticSearchMetricSender {
      */
     public void createIndex() {
         try {
-            this.client.performRequest(setAuthorizationHeader(new Request("PUT", "/" + this.esIndex)));
+            this.client.performRequest(setHeaders(new Request("PUT", "/" + this.esIndex)));
         } catch (IOException e) {
             logger.info("Index already exists!");
         }
@@ -100,7 +103,7 @@ public class ElasticSearchMetricSender {
     	Request request = new Request("GET", "/" );
     	int elasticSearchVersion = -1;
     	 try {
-             Response response = this.client.performRequest(setAuthorizationHeader(request));
+             Response response = this.client.performRequest(setHeaders(request));
              if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK && logger.isErrorEnabled()) {
                  logger.error("Unable to perform request to ElasticSearch engine for index {}. Response status: {}",
                               this.esIndex, response.getStatusLine().toString());
@@ -149,7 +152,7 @@ public class ElasticSearchMetricSender {
 
         try {
 
-            Response response = this.client.performRequest(setAuthorizationHeader(request));
+            Response response = this.client.performRequest(setHeaders(request));
 
             if (logger.isErrorEnabled()) {
                 if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
