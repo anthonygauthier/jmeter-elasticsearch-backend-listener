@@ -51,6 +51,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
 * Continuous Integration support - [Build comparison!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Continuous-Integration---Build-Comparison)
 * Send JMeter variables to ElasticSearch! [Refer to this for more info!](https://github.com/delirius325/jmeter-elasticsearch-backend-listener/wiki/Sending-JMeter-variables) 
 * New AWS ES parameters introducted in 2.6.0 version which leverage Role based authentication to access Elastic Search managed hosting on AWS
+* If your ES cluster is using a self signed certificate, you can set `es.ssl.verificationMode` to `none` to skip the hostname verification and cluster certificate validation.
 
 ### Maven
 ```xml
