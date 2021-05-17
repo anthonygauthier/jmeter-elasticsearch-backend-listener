@@ -1,4 +1,4 @@
-    package io.github.delirius325.jmeter.backendlistener.elasticsearch;
+package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -50,6 +50,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_SSL_KEYSTORE_PATH = "es.ssl.keystore.path";
     private static final String ES_SSL_KEYSTORE_PW = "es.ssl.keystore.pw";
     private static final String ES_SSL_VERIFICATION_MODE = "es.ssl.verificationMode";
+    private static final String ES_LOG_CHILD_SAMPLE = "es.log.child.sample";
     private static final long DEFAULT_TIMEOUT_MS = 200L;
     private static final String SERVICE_NAME = "es";
     private static RestClient client;
@@ -78,6 +79,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PATH, "");
         DEFAULT_ARGS.put(ES_SSL_KEYSTORE_PW, "");
         DEFAULT_ARGS.put(ES_SSL_VERIFICATION_MODE, "full");
+        DEFAULT_ARGS.put(ES_LOG_CHILD_SAMPLE, "false");
     }
     private ElasticSearchMetricSender sender;
     private Set<String> modes;
@@ -107,7 +109,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.timeoutMs = Integer.parseInt((context.getParameter(ES_TIMEOUT_MS)));
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null
                     && !JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER).trim().equals(""))
-                            ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
+                    ? Integer.parseInt(JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER)) : 0;
 
             setSSLConfiguration(context);
 
@@ -228,6 +230,27 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     @Override
     public void handleSampleResults(List<SampleResult> results, BackendListenerContext context) {
+
+        // Gather all the listeners
+        List<SampleResult> allSampleResults = new ArrayList<SampleResult>();
+        for (SampleResult sampleResult : results) {
+            allSampleResults.add(sampleResult);
+
+            if(context.getBooleanParameter(ES_LOG_CHILD_SAMPLE, false)) {
+                for (SampleResult subResult : sampleResult.getSubResults()) {
+                    allSampleResults.add(subResult);
+					/*
+					Check if sub samplers have their own sub samplers and add them to the list
+					*/
+                    if (subResult.getSubResults().length > 0) {
+                        Collections.addAll(allSampleResults, subResult.getSubResults());
+                    }
+                }
+            }
+        }
+
+        results = allSampleResults;
+
         for (SampleResult sr : results) {
             ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE),
                     context.getParameter(ES_TIMESTAMP), this.buildNumber,
@@ -267,7 +290,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     /**
      * This method checks if the test mode is valid
-     * 
+     *
      * @param mode
      *            The test mode as String
      */
@@ -285,7 +308,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
     /**
      * This method will validate the current sample to see if it is part of the filters or not.
-     * 
+     *
      * @param context
      *            The Backend Listener's context
      * @param sr
