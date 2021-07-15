@@ -43,6 +43,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_AUTH_PWD = "es.xpack.password";
     private static final String ES_PARSE_REQ_HEADERS = "es.parse.all.req.headers";
     private static final String ES_PARSE_RES_HEADERS = "es.parse.all.res.headers";
+    private static final String ES_HANDLE_SUB_RESULTS = "es.handle.sub.results";
     private static final String ES_AWS_ENDPOINT = "es.aws.endpoint";
     private static final String ES_AWS_REGION = "es.aws.region";
     private static final String ES_SSL_TRUSTSTORE_PATH = "es.ssl.truststore.path";
@@ -71,6 +72,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_AUTH_PWD, "");
         DEFAULT_ARGS.put(ES_PARSE_REQ_HEADERS, "false");
         DEFAULT_ARGS.put(ES_PARSE_RES_HEADERS, "false");
+        DEFAULT_ARGS.put(ES_HANDLE_SUB_RESULTS, "false");
         DEFAULT_ARGS.put(ES_AWS_ENDPOINT,  "");
         DEFAULT_ARGS.put(ES_AWS_REGION, "");
         DEFAULT_ARGS.put(ES_SSL_TRUSTSTORE_PATH, "");
@@ -241,6 +243,15 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                     logger.error(
                             "The ElasticSearch Backend Listener was unable to add sampler to the list of samplers to send... More info in JMeter's console.");
                     e.printStackTrace();
+                }
+            }
+
+            // Iterate through sub-results, if desired - this allows use of 'generate parent sample' in transaction controllers whilst still handling all samples
+            if (context.getBooleanParameter(ES_HANDLE_SUB_RESULTS, false)) {
+                try {
+                    handleSampleResults(Arrays.asList(sr.getSubResults()), context);
+                } catch (Exception e) {
+                    logger.error("The ElasticSearch Backend Listener failed to handle sampler sub-results.", e);
                 }
             }
         }
