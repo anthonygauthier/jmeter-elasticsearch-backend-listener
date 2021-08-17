@@ -291,7 +291,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.1</version>
+				<version>3.2.4</version>
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
@@ -309,6 +309,34 @@
 									<exclude>net.java.dev.jna:*</exclude>
 								</excludes>
 							</artifactSet>
+							<relocations>
+								<relocation>
+									<pattern>com.</pattern>
+									<shadedPattern>io.github.delirius325.com.</shadedPattern>
+									<includes>
+										<include>com.amazonaws.*</include>
+										<include>com.fasterxml.*</include>
+										<include>com.google.*</include>
+									</includes>
+								</relocation>
+								<relocation>
+									<pattern>org.</pattern>
+									<shadedPattern>io.github.delirius325.org.</shadedPattern>
+									<includes>
+										<include>org.elasticsearch.*</include>
+										<include>org.joda.*</include>
+										<include>org.json.*</include>
+									</includes>
+								</relocation>
+								<relocation>
+									<pattern>software.</pattern>
+									<shadedPattern>io.github.delirius325.software.</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>vc.</pattern>
+									<shadedPattern>io.github.delirius325.vc.</shadedPattern>
+								</relocation>
+							</relocations>
 						</configuration>
 					</execution>
 				</executions>
