@@ -1,6 +1,7 @@
 package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -24,6 +25,8 @@ import static org.apache.commons.lang3.math.NumberUtils.isCreatable;
 
 public class ElasticSearchMetric {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchMetric.class);
+    private static final String HOSTNAME = solveHostName();
+
     private SampleResult sampleResult;
     private String esTestMode;
     private String esTimestamp;
@@ -44,6 +47,15 @@ public class ElasticSearchMetric {
         this.allReqHeaders = parseReqHeaders;
         this.allResHeaders = parseResHeaders;
         this.fields = fields;
+    }
+
+    private static String solveHostName() {
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            logger.warn("Could not resolve host name, falling back to localhost", e);
+            return "localhost";
+        }
     }
 
     /**
@@ -77,7 +89,7 @@ public class ElasticSearchMetric {
         addFilteredJSON("SampleStartTime", sdf.format(new Date(this.sampleResult.getStartTime())));
         addFilteredJSON("SampleEndTime", sdf.format(new Date(this.sampleResult.getEndTime())));
         addFilteredJSON("Timestamp", this.sampleResult.getTimeStamp());
-        addFilteredJSON("InjectorHostname", InetAddress.getLocalHost().getHostName());
+        addFilteredJSON("InjectorHostname", HOSTNAME);
 
         // Add the details according to the mode that is set
         switch (this.esTestMode) {
