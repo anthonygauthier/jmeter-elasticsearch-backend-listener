@@ -41,6 +41,7 @@ JMeter ElasticSearch Backend Listener is a JMeter plugin enabling you to send te
      * SampleEndTime
      * Timestamp
      * InjectorHostname
+     * ElapsedDuration
 * Verbose, semi-verbose, error only, and quiet mode
   * __debug__ : Send request/response information of all samplers (headers, body, etc.)
   * __info__ : Sends all samplers to the ElasticSearch engine, but only sends the headers, body info for the failed samplers.

@@ -97,6 +97,7 @@ public class ElasticSearchMetric {
 
         addAssertions();
         addElapsedTime();
+        addElapsedDuration();
         addCustomFields(context);
         parseHeadersAsJsonProps(this.allReqHeaders, this.allResHeaders);
 
@@ -152,6 +153,15 @@ public class ElasticSearchMetric {
     }
 
     /**
+     * This method adds the ElapsedDuration in seconds.
+     */
+    private void addElapsedDuration() {
+        long elapsed = (System.currentTimeMillis() - JMeterContextService.getTestStartTime()) / 1000;
+        addFilteredJSON("ElapsedDuration", elapsed);
+    }
+
+
+    /**
      * Methods that add all custom fields added by the user in the Backend Listener's GUI panel
      *
      * @param context BackendListenerContext
@@ -186,7 +196,7 @@ public class ElasticSearchMetric {
 
     /**
      * This method will parse the headers and look for custom variables passed through as header. It can also separate
-     * all headers into different ElasticSearch document properties by passing "true" This is a work-around for the 
+     * all headers into different ElasticSearch document properties by passing "true" This is a work-around for the
      * native behaviour of JMeter, where variables are not accessible within the backend listener.
      *
      * @param allReqHeaders boolean to determine if the user wants to separate ALL request headers into different ES JSON
