@@ -1,4 +1,4 @@
-    package io.github.delirius325.jmeter.backendlistener.elasticsearch;
+package io.github.delirius325.jmeter.backendlistener.elasticsearch;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -34,6 +34,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private static final String ES_PORT = "es.port";
     private static final String ES_INDEX = "es.index";
     private static final String ES_FIELDS = "es.fields";
+    private static final String ES_FIELDS_MAPPING = "es.fields.mapping";
     private static final String ES_TIMESTAMP = "es.timestamp";
     private static final String ES_BULK_SIZE = "es.bulk.size";
     private static final String ES_TIMEOUT_MS = "es.timout.ms";
@@ -66,6 +67,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
         DEFAULT_ARGS.put(ES_TIMEOUT_MS, Long.toString(DEFAULT_TIMEOUT_MS));
         DEFAULT_ARGS.put(ES_SAMPLE_FILTER, null);
         DEFAULT_ARGS.put(ES_FIELDS, null);
+        DEFAULT_ARGS.put(ES_FIELDS_MAPPING, null);
         DEFAULT_ARGS.put(ES_TEST_MODE, "info");
         DEFAULT_ARGS.put(ES_AUTH_USER, "");
         DEFAULT_ARGS.put(ES_AUTH_PWD, "");
@@ -83,6 +85,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
     private Set<String> modes;
     private Set<String> filters;
     private Set<String> fields;
+    private Map<String,String> fieldNameMap;
     private int buildNumber;
     private int bulkSize;
     private int esVersion;
@@ -103,6 +106,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             this.filters = new HashSet<>();
             this.fields = new HashSet<>();
             this.modes = new HashSet<>(Arrays.asList("info", "debug", "error", "quiet"));
+            this.fieldNameMap = new HashMap<String, String>();
             this.bulkSize = Integer.parseInt(context.getParameter(ES_BULK_SIZE));
             this.timeoutMs = Integer.parseInt((context.getParameter(ES_TIMEOUT_MS)));
             this.buildNumber = (JMeterUtils.getProperty(ElasticsearchBackendClient.BUILD_NUMBER) != null
@@ -151,6 +155,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
 
             convertParameterToSet(context, ES_SAMPLE_FILTER, this.filters);
             convertParameterToSet(context, ES_FIELDS, this.fields);
+            convertParameterToMap(context, ES_FIELDS_MAPPING, this.fieldNameMap);
 
             this.sender = new ElasticSearchMetricSender(client, context.getParameter(ES_INDEX).toLowerCase(),
                     context.getParameter(ES_AUTH_USER), context.getParameter(ES_AUTH_PWD),
@@ -179,6 +184,50 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
                 set.add(entry.toLowerCase().trim());
                 if(logger.isDebugEnabled())
                     logger.debug("Parsed from " + parameter + ": " + entry.toLowerCase().trim());
+            }
+        }
+    }
+
+    /**
+     * Method that converts a semicolon plus colon separated list contained in a parameter into a Map
+     * @param context
+     * @param parameter
+     * @param map
+     */
+    private void convertParameterToMap(BackendListenerContext context, String parameter, Map<String,String> map) {
+        List<String> originalFieldnames = Arrays.asList(
+            "AllThreads",
+            "BodySize",
+            "Bytes",
+            "SentBytes",
+            "ConnectTime",
+            "ContentType",
+            "DataType",
+            "ErrorCount",
+            "GrpThreads",
+            "IdleTime",
+            "Latency",
+            "ResponseTime",
+            "SampleCount",
+            "SampleLabel",
+            "ThreadName",
+            "URL",
+            "ResponseCode",
+            "TestStartTime",
+            "SampleStartTime",
+            "SampleEndTime",
+            "Timestamp",
+            "InjectorHostname"
+        );
+        for (String field : originalFieldnames) {
+            map.put(field, field);
+        }
+        if (context.getParameter(parameter).contains(":")) {
+            for (String mapping : context.getParameter(parameter).split(";")) {
+                String[] m = mapping.split(":");
+                map.put(m[0].trim(), m[1].trim());
+                if(logger.isDebugEnabled())
+                    logger.debug("fieldname '" + m[0].trim() + "' replaced by  '" + m[1].trim() + "'");
             }
         }
     }
@@ -232,7 +281,7 @@ public class ElasticsearchBackendClient extends AbstractBackendListenerClient {
             ElasticSearchMetric metric = new ElasticSearchMetric(sr, context.getParameter(ES_TEST_MODE),
                     context.getParameter(ES_TIMESTAMP), this.buildNumber,
                     context.getBooleanParameter(ES_PARSE_REQ_HEADERS, false),
-                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false), fields);
+                    context.getBooleanParameter(ES_PARSE_RES_HEADERS, false), fields, this.fieldNameMap);
 
             if (validateSample(context, sr)) {
                 try {

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.HashMap;
 
 import org.apache.jmeter.samplers.SampleResult;
 import org.junit.Before;
@@ -18,9 +19,9 @@ public class TestElasticSearchBackend {
     @Before
     public void setUp() throws Exception {
         metricCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 1, false, false,
-                new HashSet<String>());
+                new HashSet<String>(), new HashMap<String, String>());
         metricNoCI = new ElasticSearchMetric(new SampleResult(), "info", "yyyy-MM-dd'T'HH:mm:ss.SSSZZ", 0, false,
-                false, new HashSet<String>());
+                false, new HashSet<String>(), new HashMap<String, String>());
     }
 
     @Test
