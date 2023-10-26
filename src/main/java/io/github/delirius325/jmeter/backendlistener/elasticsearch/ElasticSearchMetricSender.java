@@ -115,7 +115,6 @@ public class ElasticSearchMetricSender {
                  }else{
                     elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
                  }
-     			 logger.info("Zaahid : "  + version.get("distribution").toString());
                  logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
              }
          } catch (Exception e) {
