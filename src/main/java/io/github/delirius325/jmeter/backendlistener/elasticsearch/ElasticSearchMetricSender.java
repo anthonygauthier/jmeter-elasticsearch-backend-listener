@@ -109,7 +109,12 @@ public class ElasticSearchMetricSender {
      			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
      			 JSONObject version  = (JSONObject) elasticSearchConfig.get("version");
      			 String elasticVersion =  version.get("number").toString();
-     			 elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
+                 if (version.get("distribution").toString() == "opensearch") {
+                    elasticSearchVersion = 7;
+                 }else{
+                    elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
+                 }
+     			 
                  logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
              }
          } catch (Exception e) {
