@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -109,12 +110,12 @@ public class ElasticSearchMetricSender {
      			 JSONObject elasticSearchConfig = new JSONObject(responseBody);
      			 JSONObject version  = (JSONObject) elasticSearchConfig.get("version");
      			 String elasticVersion =  version.get("number").toString();
-                 if (version.get("distribution").toString() == "opensearch") {
+                 if (Objects.equals(version.get("distribution").toString(), "opensearch")) {
                     elasticSearchVersion = 7;
                  }else{
                     elasticSearchVersion = Integer.parseInt(elasticVersion.split("\\.")[0]);
                  }
-     			 
+     			 logger.info("Zaahid : "  + version.get("distribution").toString());
                  logger.info("ElasticSearch Version : "  + Integer.toString(elasticSearchVersion));
              }
          } catch (Exception e) {
