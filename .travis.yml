@@ -1,8 +1,0 @@
-language: java
-jdk:
-  - openjdk10
-
-sudo: true
-cache:
-  directories:
-    - $HOME/.m2

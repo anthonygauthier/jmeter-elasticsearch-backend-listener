@@ -1,0 +1,16 @@
+name: Conventional Commits
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: liatrio/github-actions/conventional-pr-title@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

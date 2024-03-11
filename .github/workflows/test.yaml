@@ -1,0 +1,21 @@
+name: Continuous Testing
+on: ['push']
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+        os: [ 'ubuntu-latest' ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDKs
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: "temurin"
+
+      - name: Build project with Maven
+        run: mvn test --file pom.xml
